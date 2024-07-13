@@ -5,10 +5,15 @@ terraform {
 remote_state {
   backend = "s3"
   config = {
-    bucket         = "Cryptra-prod-terraform-state"
-    key            = "environments/prod/terraform.tfstate"
-    region         = "ap-northeast-1"
-    encrypt        = true
+    bucket = "Cryptra-prod-terraform-state"
+    key    = "environments/prod/terraform.tfstate"
+    region = "ap-northeast-1"
+    encrypt = true
+    s3_bucket_tags = {
+      "Terraform"   = "true"
+      "Environment" = "prod"
+      "System"      = "Cryptra"
+    }
   }
 }
 
