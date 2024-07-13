@@ -75,7 +75,7 @@ jobs:
         uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Update Terraform docs"
-          branch: main
-          title: "Update Terraform docs"
-          body: "This PR updates the Terraform documentation."
+          commit-message: "Run security and format checks"
+          branch: feature/security-checks
+          title: "Run security and format checks"
+          body: "This PR runs TFsec and TFlint checks, and ensures proper formatting for Terraform and Terragrunt."
