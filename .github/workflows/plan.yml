@@ -74,6 +74,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set Tokyo Time
+        id: tokyo_time
+        run: echo "tokyo_time=$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
+
       - name: Check and Create Pull Request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -82,7 +86,7 @@ jobs:
           if [[ $PR_COUNT == 0 ]]; then
             gh pr create \
               -B main \
-              -t "${{ github.event.head_commit.message }}" \
+              -t "Release $(echo ${{ env.tokyo_time }})" \
               -a "${{ github.actor }}"
           else
             echo "PR already exists."
