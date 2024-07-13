@@ -79,7 +79,10 @@ jobs:
         with:
           ruby-version: 3.1
 
-      - run: gem install --no-document git-pr-release
+      - run: |
+          gem install --no-document git-pr-release
+          gem install --no-document faraday-retry
+          gem install --no-document faraday-multipart
 
       - run: git-pr-release
         env:
