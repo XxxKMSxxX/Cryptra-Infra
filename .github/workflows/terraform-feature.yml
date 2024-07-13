@@ -70,23 +70,6 @@ jobs:
         working-directory: environments/prod
         run: terragrunt plan
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
-
-      - name: Initialize Terraform
-        working-directory: environments/prod
-        run: terraform init
-
-      - name: Validate Terraform
-        working-directory: environments/prod
-        run: terraform validate
-
-      - name: Run Terraform plan
-        working-directory: environments/prod
-        run: terraform plan -out=tfplan
-
       - name: Generate Terraform docs
         working-directory: environments/prod
         run: terraform-docs markdown table --output-file README.md
