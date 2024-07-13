@@ -46,4 +46,4 @@ jobs:
 
       - name: Apply Terragrunt configuration
         working-directory: environments/prod
-        run: terragrunt apply --terragrunt-non-interactive
+        run: terragrunt apply -auto-approve --terragrunt-non-interactive
