@@ -22,10 +22,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract branch name
-        id: extract_branch
-        run: echo "branch_name=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
-
       - name: Setup aqua
         uses: aquaproj/aqua-installer@v3.0.1
         with:
@@ -92,7 +88,7 @@ jobs:
         env:
           GIT_PR_RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_PR_RELEASE_BRANCH_PRODUCTION: main
-          GIT_PR_RELEASE_BRANCH_STAGING: ${{ env.branch_name }}
+          GIT_PR_RELEASE_BRANCH_STAGING: ${GITHUB_REF#refs/heads/}
           GIT_PR_RELEASE_LABELS: release
           GIT_PR_RELEASE_TEMPLATE: .github/git-pr-release.erb
           TZ: Asia/Tokyo
