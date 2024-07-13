@@ -1,0 +1,19 @@
+---
+# aqua - Declarative CLI Version Manager
+# https://aquaproj.github.io/
+# checksum:
+#   enabled: true
+#   require_checksum: true
+#   supported_envs:
+#   - all
+registries:
+- type: standard
+  ref: v4.203.0  # renovate: depName=aquaproj/aqua-registry
+packages:
+  - name: aquaproj/aqua-installer@v2.29.0
+  - name: aquasecurity/tfsec@v1.28.10
+  - name: gruntwork-io/terragrunt@v0.62.0
+  - name: reviewdog/reviewdog@v0.20.0
+  - name: suzuki-shunsuke/tfcmt@v4.10.0
+  - name: terraform-docs/terraform-docs@v0.18.0
+  - name: terraform-linters/tflint@v0.52.0
