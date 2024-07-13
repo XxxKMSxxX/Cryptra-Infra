@@ -10,7 +10,6 @@ registries:
 - type: standard
   ref: v4.203.0  # renovate: depName=aquaproj/aqua-registry
 packages:
-  - name: aquaproj/aqua-installer@v2.29.0
   - name: aquasecurity/tfsec@v1.28.10
   - name: gruntwork-io/terragrunt@v0.62.0
   - name: reviewdog/reviewdog@v0.20.0
