@@ -86,8 +86,8 @@ jobs:
           if [[ $PR_COUNT == 0 ]]; then
             gh pr create \
               -B main \
-              -H ${{ env.branch_name }} \
-              -t "Release $(echo ${{ env.tokyo_time }})" \
+              -H "${{ env.branch_name }}" \
+              -t "Release ${{ env.tokyo_time }}" \
               -b "This PR merges the feature branch into main and includes security and format checks." \
               -a "${{ github.actor }}"
           else
