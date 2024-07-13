@@ -1,4 +1,4 @@
-name: plan
+name: apply
 
 on:
   pull_request:

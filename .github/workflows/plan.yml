@@ -73,6 +73,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "Run security and format checks"
-          branch: feature/security-checks
+          branch: main
           title: "Run security and format checks"
           body: "This PR runs TFsec and TFlint checks, and ensures proper formatting for Terragrunt."
