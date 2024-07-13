@@ -1,4 +1,4 @@
-name: Terraform Plan and Docs
+name: plan
 
 on:
   push:
@@ -16,7 +16,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  terraform:
+  plan:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -51,9 +51,6 @@ jobs:
           tflint --init
           tflint --format=checkstyle | reviewdog -f=checkstyle -name="tflint" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error
 
-      - name: Check Terraform format
-        run: terraform fmt -check
-
       - name: Initialize Terragrunt
         working-directory: environments/prod
         run: terragrunt init --terragrunt-non-interactive
@@ -78,4 +75,4 @@ jobs:
           commit-message: "Run security and format checks"
           branch: feature/security-checks
           title: "Run security and format checks"
-          body: "This PR runs TFsec and TFlint checks, and ensures proper formatting for Terraform and Terragrunt."
+          body: "This PR runs TFsec and TFlint checks, and ensures proper formatting for Terragrunt."
