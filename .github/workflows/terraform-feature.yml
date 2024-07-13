@@ -84,12 +84,12 @@ jobs:
           git commit -m "Update Terraform docs"
           git push origin HEAD
 
-    - name: Create Pull Request
-      if: startsWith(github.ref, 'refs/heads/feature/')
-      uses: peter-evans/create-pull-request@v3
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        commit-message: "Update Terraform docs"
-        branch: main
-        title: "Update Terraform docs"
-        body: "This PR updates the Terraform documentation."
+      - name: Create Pull Request
+        if: startsWith(github.ref, 'refs/heads/feature/')
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update Terraform docs"
+          branch: main
+          title: "Update Terraform docs"
+          body: "This PR updates the Terraform documentation."
