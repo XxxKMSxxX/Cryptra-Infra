@@ -9,7 +9,7 @@ remote_state {
     if_exists = "overwrite"
   }
   config = {
-    bucket = "Cryptra-prod-terraform-state"
+    bucket = "cryptra-prod-terraform-state"
     key    = "environments/prod/terraform.tfstate"
     region = "ap-northeast-1"
     encrypt = true
