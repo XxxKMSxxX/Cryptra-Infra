@@ -67,19 +67,25 @@ jobs:
         working-directory: environments/prod
         run: terragrunt plan
 
-  create-pr:
+  release-pull-request:
+    permissions:
+      pull-requests: write
     runs-on: ubuntu-latest
     needs: plan
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Create Pull Request for Apply
-        if: startsWith(github.ref, 'refs/heads/feature/')
-        uses: peter-evans/create-pull-request@v3
+      - uses: ruby/setup-ruby@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Run security and format checks"
-          branch: main
-          title: "Merge feature branch into main"
-          body: "This PR merges the feature branch into main and includes security and format checks."
+          ruby-version: 3.1
+
+      - run: gem install --no-document git-pr-release
+
+      - run: git-pr-release
+        env:
+          GIT_PR_RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_PR_RELEASE_BRANCH_PRODUCTION: main
+          GIT_PR_RELEASE_BRANCH_STAGING: feature/**
+          GIT_PR_RELEASE_LABELS: release
+          GIT_PR_RELEASE_TEMPLATE: .github/git-pr-release.erb
+          TZ: Asia/Tokyo
