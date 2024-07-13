@@ -4,6 +4,10 @@ terraform {
 
 remote_state {
   backend = "s3"
+  generate = {
+    path      = "_backend.tf"
+    if_exists = "overwrite"
+  }
   config = {
     bucket = "Cryptra-prod-terraform-state"
     key    = "environments/prod/terraform.tfstate"
