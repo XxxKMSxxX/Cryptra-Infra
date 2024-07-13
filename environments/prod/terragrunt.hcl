@@ -22,7 +22,7 @@ remote_state {
 }
 
 inputs = {
-  repository_name = "Cryptra-Collector"
+  repository_name = "cryptra-collector"
   region          = "ap-northeast-1"
 }
 
