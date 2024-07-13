@@ -55,15 +55,19 @@ jobs:
         run: terraform fmt -check
 
       - name: Initialize Terragrunt
+        working-directory: environments/prod
         run: terragrunt init --terragrunt-non-interactive
 
       - name: Check Terragrunt format
+        working-directory: environments/prod
         run: terragrunt fmt -check
 
       - name: Validate Terragrunt
+        working-directory: environments/prod
         run: terragrunt validate
 
       - name: Run Terragrunt plan
+        working-directory: environments/prod
         run: terragrunt plan
 
       - name: Setup Terraform
