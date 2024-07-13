@@ -68,27 +68,22 @@ jobs:
         run: terragrunt plan
 
   release-pull-request:
-    permissions:
-      pull-requests: write
+    needs: [plan]
     runs-on: ubuntu-latest
-    needs: plan
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.1
-
-      - run: |
-          gem install --no-document git-pr-release
-          gem install --no-document faraday-retry
-          gem install --no-document faraday-multipart
-
-      - run: git-pr-release
+      - name: Check and Create Pull Request
         env:
-          GIT_PR_RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_PR_RELEASE_BRANCH_PRODUCTION: main
-          GIT_PR_RELEASE_BRANCH_STAGING: ${GITHUB_REF#refs/heads/}
-          GIT_PR_RELEASE_LABELS: release
-          GIT_PR_RELEASE_TEMPLATE: .github/git-pr-release.erb
-          TZ: Asia/Tokyo
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_COUNT=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '. | length')
+          if [[ $PR_COUNT == 0 ]]; then
+            gh pr create \
+              -B main \
+              -t "${{ github.event.head_commit.message }}" \
+              -a "${{ github.actor }}"
+          else
+            echo "PR already exists."
+          fi
