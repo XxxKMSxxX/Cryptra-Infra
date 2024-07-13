@@ -54,17 +54,17 @@ jobs:
       - name: Check Terraform format
         run: terraform fmt -check
 
-      - name: Check Terragrunt format
-        run: terragrunt fmt -check
-
       - name: Initialize Terragrunt
         run: terragrunt init --terragrunt-non-interactive
+
+      - name: Check Terragrunt format
+        run: terragrunt fmt -check
 
       - name: Validate Terragrunt
         run: terragrunt validate
 
       - name: Run Terragrunt plan
-        run: terragrunt plan --terragrunt-tfpath $GITHUB_WORKSPACE/.github/scripts/tfwrapper.sh
+        run: terragrunt plan
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
@@ -72,15 +72,19 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Initialize Terraform
+        working-directory: environments/prod
         run: terraform init
 
       - name: Validate Terraform
+        working-directory: environments/prod
         run: terraform validate
 
       - name: Run Terraform plan
+        working-directory: environments/prod
         run: terraform plan -out=tfplan
 
       - name: Generate Terraform docs
+        working-directory: environments/prod
         run: terraform-docs markdown table --output-file README.md
 
       - name: Commit and push changes
