@@ -74,7 +74,7 @@ jobs:
         run: terraform-docs markdown table environments/prod --output-file README.md
 
       - name: Commit and push changes
-        if: ${{ github.ref == 'refs/heads/feature/**' }}
+        if: startsWith(github.ref, 'refs/heads/feature/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -85,7 +85,7 @@ jobs:
           git push origin HEAD
 
       - name: Create Pull Request
-        if: ${{ github.ref == 'refs/heads/feature/**' }}
+        if: startsWith(github.ref, 'refs/heads/feature/')
         uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
