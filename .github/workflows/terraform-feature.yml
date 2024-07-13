@@ -71,8 +71,7 @@ jobs:
         run: terragrunt plan
 
       - name: Generate Terraform docs
-        working-directory: environments/prod
-        run: terraform-docs markdown table --output-file README.md
+        run: terraform-docs markdown table environments/prod --output-file README.md
 
       - name: Commit and push changes
         if: ${{ github.ref == 'refs/heads/feature/**' }}
