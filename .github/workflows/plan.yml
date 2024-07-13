@@ -67,12 +67,19 @@ jobs:
         working-directory: environments/prod
         run: terragrunt plan
 
-      - name: Create Pull Request
+  create-pr:
+    runs-on: ubuntu-latest
+    needs: terraform
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Create Pull Request for Apply
         if: startsWith(github.ref, 'refs/heads/feature/')
         uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "Run security and format checks"
           branch: main
-          title: "Run security and format checks"
-          body: "This PR runs TFsec and TFlint checks, and ensures proper formatting for Terragrunt."
+          title: "Merge feature branch into main"
+          body: "This PR merges the feature branch into main and includes security and format checks."
