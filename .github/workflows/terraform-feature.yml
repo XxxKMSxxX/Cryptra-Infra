@@ -16,7 +16,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  plan-and-docs:
+  setup:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -27,39 +27,85 @@ jobs:
         with:
           aqua_version: v2.9.0
 
+      - name: Install tools via aqua
+        run: |
+          aqua install
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
+  lint:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Run TFsec
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tfsec --format=checkstyle | reviewdog -f=checkstyle -name="tfsec" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error
+
+      - name: Run TFlint
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tflint --init
+          tflint --format=checkstyle | reviewdog -f=checkstyle -name="tflint" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error
+
+      - name: Check Terraform format
+        run: terraform fmt -check
+
+      - name: Check Terragrunt format
+        run: terragrunt fmt -check
+
+  terragrunt:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Initialize Terragrunt
+        run: terragrunt init --terragrunt-non-interactive
+
+      - name: Validate Terragrunt
+        run: terragrunt validate
+
+      - name: Run Terragrunt plan
+        run: terragrunt plan --terragrunt-tfpath $GITHUB_WORKSPACE/.github/scripts/tfwrapper.sh
+
+  terraform:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - name: TFlint
-        run: |
-          tflint --init
-          tflint --format=checkstyle | reviewdog -f=checkstyle -name="tflint" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error
-
-      - name: Check Terraform fmt
-        run: terraform fmt -check
-
-      - name: Check terragrunt fmt
-        run: terragrunt fmt -check
-
-      - name: Terragrunt validate
-        run: terragrunt validate
-
-      - name: Terraform init
+      - name: Initialize Terraform
         run: terraform init
 
-      - name: Terraform validate
+      - name: Validate Terraform
         run: terraform validate
 
-      - name: Terraform plan
+      - name: Run Terraform plan
         run: terraform plan -out=tfplan
+
+  docs:
+    runs-on: ubuntu-latest
+    needs: [setup, terraform]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Generate Terraform docs
         run: terraform-docs markdown table --output-file README.md
@@ -84,18 +130,3 @@ jobs:
           branch: main
           title: "Update Terraform docs"
           body: "This PR updates the Terraform documentation."
-
-      - name: Reviewdog
-        uses: reviewdog/reviewdog@v0.20.0
-        with:
-          name: "reviewdog"
-          reporter: github-pr-review
-          filter-mode: diff
-          fail-on-error: true
-
-      - name: tfcmt
-        uses: suzuki-shunsuke/tfcmt@v4.10.0
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          command: plan
-          tfcmt_version: v4.10.0
