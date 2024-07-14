@@ -116,9 +116,8 @@ jobs:
           tflint --format=checkstyle | reviewdog -f=checkstyle -name="tflint" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error
 
   release-pull-request:
-    needs: [terragrunt, terraform]
-    runs-on: ubuntu-latest
     if: needs.setup.outputs.envs_changed != '[]' || needs.setup.outputs.modules_changed != '[]'
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
