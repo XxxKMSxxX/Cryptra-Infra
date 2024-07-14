@@ -1,5 +1,9 @@
+include {
+  path = find_in_parent_folders("common.hcl")
+}
+
 locals {
-  common_vars = yamldecode(file(find_in_parent_folders("common.yaml")))
+  common_vars = yamldecode(file(find_in_parent_folders("env.yaml")))
 }
 
 terraform {

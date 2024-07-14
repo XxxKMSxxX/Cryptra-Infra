@@ -1,15 +1,19 @@
-resource "aws_kinesis_stream" "kinesis_streams" {
-  for_each = { for exchange_name, exchange in var.collects :
-    exchange_name => flatten([
-      for contract_type, symbols in exchange.contracts : [
+locals {
+  streams = flatten([
+    for exchange_name, exchange in var.collects : [
+      for contract_type, symbols in exchange : [
         for symbol in symbols : {
           exchange      = exchange_name,
           contract_type = contract_type,
           symbol        = symbol
         }
       ]
-    ])
-  }
+    ]
+  ])
+}
+
+resource "aws_kinesis_stream" "kinesis_streams" {
+  for_each = { for idx, stream in local.streams : "${stream.exchange}-${stream.contract_type}-${stream.symbol}" => stream }
 
   name             = "${var.project_name}-${each.value.exchange}-${each.value.contract_type}-${each.value.symbol}"
   shard_count      = 1
