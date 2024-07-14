@@ -15,29 +15,69 @@ permissions:
   contents: write
   pull-requests: write
 
+on:
+  push:
+    branches:
+      - feature/**
+
+env:
+  AWS_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.IAM_ROLE_NAME }}
+  AWS_DEFAULT_REGION: ap-northeast-1
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
 jobs:
-  plan:
+  setup:
     runs-on: ubuntu-latest
+    outputs:
+      env_changes: ${{ steps.check.outputs.env_changes }}
+      mod_changes: ${{ steps.check.outputs.mod_changes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup aqua
-        uses: aquaproj/aqua-installer@v3.0.1
-        with:
-          aqua_version: v2.28.0
-          aqua_opts: ""
-
-      - name: Install tools via Aqua
+      - name: Check for changes in environments and modules
+        id: check
         run: |
-          aqua install
+          git diff --name-only HEAD~1 HEAD > changes.txt
+          echo "::set-output name=env_changes::$(grep -q '^environments/' changes.txt && echo true || echo false)"
+          echo "::set-output name=mod_changes::$(grep -q '^modules/' changes.txt && echo true || echo false)"
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+  terragrunt:
+    needs: setup
+    if: needs.setup.outputs.env_changes == 'true'
+    uses: ./.github/workflows/common.yml
+    with:
+      working-directory: environments/prod
 
+    steps:
+      - name: Initialize Terragrunt
+        working-directory: ${{ inputs.working-directory }}
+        run: terragrunt run-all init --terragrunt-non-interactive
+
+      - name: Check Terragrunt format
+        working-directory: ${{ inputs.working-directory }}
+        run: terragrunt run-all fmt -check
+
+      - name: Validate Terragrunt
+        working-directory: ${{ inputs.working-directory }}
+        run: terragrunt run-all validate
+
+      - name: Run Terragrunt plan
+        working-directory: ${{ inputs.working-directory }}
+        run: terragrunt run-all plan
+
+  terraform:
+    needs: setup
+    if: needs.setup.outputs.mod_changes == 'true'
+    uses: ./.github/workflows/common.yml
+    with:
+      working-directory: modules
+
+    steps:
       - name: Run TFsec
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -51,45 +91,35 @@ jobs:
           tflint --init
           tflint --format=checkstyle | reviewdog -f=checkstyle -name="tflint" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error
 
-      - name: Initialize Terragrunt
-        working-directory: environments/prod
-        run: terragrunt init --terragrunt-non-interactive
-
-      - name: Check Terragrunt format
-        working-directory: environments/prod
-        run: terragrunt fmt -check
-
-      - name: Validate Terragrunt
-        working-directory: environments/prod
-        run: terragrunt validate
-
-      - name: Run Terragrunt plan
-        working-directory: environments/prod
-        run: terragrunt plan
-
   release-pull-request:
-    needs: [plan]
+    needs: [terragrunt, terraform]
     runs-on: ubuntu-latest
+    if: needs.setup.outputs.env_changes == 'true' || needs.setup.outputs.mod_changes == 'true'
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set Tokyo Time
-        id: tokyo_time
+        id: set_tokyo_time
         run: echo "tokyo_time=$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
 
-      - name: Check and Create Pull Request
+      - name: Determine if PR already exists
+        id: check_pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PR_COUNT=$(gh pr list --head "${{ env.branch_name }}" --json number --jq '. | length')
-          if [[ $PR_COUNT == 0 ]]; then
-            gh pr create \
-              -B main \
-              -H "${{ env.branch_name }}" \
-              -t "Release ${{ env.tokyo_time }}" \
-              -b "This PR merges the feature branch into main and includes security and format checks." \
-              -a "${{ github.actor }}"
-          else
-            echo "PR already exists."
-          fi
+          PR_COUNT=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '. | length')
+          echo "::set-output name=pr_count::$PR_COUNT"
+
+      - name: Create Pull Request
+        if: steps.check_pr.outputs.pr_count == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            -B main \
+            -H "${{ github.ref_name }}" \
+            -t "Automated Release - ${{ env.tokyo_time }}" \
+            -b "This automated PR merges the feature branch '${{ github.ref_name }}' into 'main' and includes the following updates:\n\n- Security checks\n- Format checks\n\nPlease review and approve the changes." \
+            -a "${{ github.actor }}"
+        shell: bash

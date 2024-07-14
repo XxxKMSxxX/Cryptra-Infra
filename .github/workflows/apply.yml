@@ -17,33 +17,17 @@ permissions:
   contents: read
 
 jobs:
-  apply:
+  apply-terragrunt:
     runs-on: ubuntu-latest
+    uses: ./.github/workflows/common.yml
+    with:
+      working-directory: environments/prod
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup aqua
-        uses: aquaproj/aqua-installer@v3.0.1
-        with:
-          aqua_version: v2.28.0
-          aqua_opts: ""
-
-      - name: Install tools via Aqua
-        run: |
-          aqua install
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_DEFAULT_REGION }}
-
       - name: Initialize Terragrunt
-        working-directory: environments/prod
-        run: terragrunt init --terragrunt-non-interactive
+        working-directory: ${{ inputs.working-directory }}
+        run: terragrunt run-all init --terragrunt-non-interactive
 
       - name: Apply Terragrunt configuration
-        working-directory: environments/prod
-        run: terragrunt apply -auto-approve --terragrunt-non-interactive
+        working-directory: ${{ inputs.working-directory }}
+        run: terragrunt run-all apply --terragrunt-non-interactive
