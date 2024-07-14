@@ -1,5 +1,5 @@
-include {
-  path = "../common.hcl"
+locals {
+  common_vars = yamldecode(file(find_in_parent_folders("common.yaml")))
 }
 
 terraform {
@@ -7,5 +7,5 @@ terraform {
 }
 
 inputs = {
-  repository_name = "${local.project_name}-collector"
+  repository_name = "${local.common_vars.project_name}-collector"
 }
