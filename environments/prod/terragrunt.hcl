@@ -21,6 +21,7 @@ dependencies {
   paths = ["./ecr", "./kinesis"]
 }
 
+
 include {
   path = "${get_terragrunt_dir()}/common.hcl"
 }
