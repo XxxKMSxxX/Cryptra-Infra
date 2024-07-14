@@ -1,7 +1,3 @@
-terraform {
-  source = "../../modules/ecr"
-}
-
 remote_state {
   backend = "s3"
   generate = {
@@ -21,42 +17,10 @@ remote_state {
   }
 }
 
-inputs = {
-  repository_name = "cryptra-collector"
-  region          = "ap-northeast-1"
+dependencies {
+  paths = ["./ecr", "./kinesis"]
 }
 
-generate "provider" {
-  path      = "provider.tf"
-  if_exists = "overwrite"
-  contents  = <<EOF
-provider "aws" {
-  region = var.region
-}
-EOF
-}
-
-generate "version" {
-  path      = "version.tf"
-  if_exists = "overwrite"
-  contents  = <<EOF
-terraform {
-  required_version = ">= 0.14"
-}
-EOF
-}
-
-generate "variables" {
-  path      = "variables.tf"
-  if_exists = "overwrite"
-  contents  = <<EOF
-variable "repository_name" {
-  description = "The name of the ECR repository"
-  type        = string
-}
-variable "region" {
-  description = "The AWS region"
-  type        = string
-}
-EOF
+include {
+  path = "${get_terragrunt_dir()}/common.hcl"
 }
