@@ -1,7 +1,3 @@
-terraform {
-  source = "../../modules/ecr"
-}
-
 remote_state {
   backend = "s3"
   generate = {
@@ -21,17 +17,12 @@ remote_state {
   }
 }
 
-inputs = {
-  repository_name = "cryptra-collector"
-  region          = "ap-northeast-1"
-}
-
 generate "provider" {
   path      = "provider.tf"
   if_exists = "overwrite"
   contents  = <<EOF
 provider "aws" {
-  region = var.region
+  region = "ap-northeast-1"
 }
 EOF
 }
@@ -46,17 +37,36 @@ terraform {
 EOF
 }
 
-generate "variables" {
-  path      = "variables.tf"
-  if_exists = "overwrite"
-  contents  = <<EOF
-variable "repository_name" {
-  description = "The name of the ECR repository"
-  type        = string
+locals {
+  project_name = "Cryptra"
+
+  collects = {
+    bybit = {
+      contracts = {
+        spot      = ["BTCUSDT", "ETHUSDT", "SOLUSDT"],
+        linear    = ["BTCUSDT", "ETHUSDT", "SOLUSDT"],
+        inverse   = ["BTCUSD", "ETHUSD", "SOLUSD"],
+      }
+    },
+    binance = {
+      contracts = {
+        spot           = ["btcusdt", "btcjpy", "ethusdt", "ethjpy", "solusdt", "soljpy"],
+        usdt_perpetual = ["btcusdt", "ethusdt", "solusdt"],
+      }
+    },
+    bitflyer = {
+      contracts = {
+        spot = ["BTC_JPY", "ETH_JPY"],
+        fx   = ["FX_BTC_JPY"],
+      }
+    }
+  }
 }
-variable "region" {
-  description = "The AWS region"
-  type        = string
+
+dependencies {
+  paths = ["./ecr", "./kinesis"]
 }
-EOF
+
+include {
+  path = find_in_parent_folders()
 }
