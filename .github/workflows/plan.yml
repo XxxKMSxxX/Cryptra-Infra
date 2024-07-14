@@ -116,6 +116,7 @@ jobs:
           tflint --format=checkstyle | reviewdog -f=checkstyle -name="tflint" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error
 
   release-pull-request:
+    needs: [terragrunt, terraform]
     if: needs.setup.outputs.envs_changed != '[]' || needs.setup.outputs.modules_changed != '[]'
     runs-on: ubuntu-latest
     steps:
