@@ -39,7 +39,7 @@ generate "version" {
   if_exists = "overwrite"
   contents  = <<EOF
 terraform {
-  required_version = 1.9.2
+  required_version = ">= 1.9.2"
 }
 EOF
 }
