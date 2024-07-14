@@ -22,8 +22,9 @@ jobs:
     steps:
       - name: Common Setup
         uses: ./.github/workflows/common_setup.yml
-        with:
-          working-directory: environments/prod
+        secrets:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
       - name: Initialize Terragrunt
         working-directory: environments/prod

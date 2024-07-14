@@ -2,10 +2,11 @@ name: Common Setup
 
 on:
   workflow_call:
-    inputs:
-      working-directory:
+    secrets:
+      AWS_ROLE_ARN:
         required: true
-        type: string
+      AWS_DEFAULT_REGION:
+        required: true
 
 jobs:
   common-setup:
