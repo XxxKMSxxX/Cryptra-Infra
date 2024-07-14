@@ -3,11 +3,7 @@ terraform {
 }
 
 include {
-  path = find_in_parent_folders("environments/prod/terragrunt.hcl")
-}
-
-locals {
-  project_name = read_terragrunt_config(find_in_parent_folders("environments/prod/terragrunt.hcl")).locals.project_name
+  path = find_in_parent_folders("environments/prod/common.hcl")
 }
 
 inputs = {
