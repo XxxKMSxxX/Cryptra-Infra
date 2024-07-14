@@ -1,9 +1,9 @@
-terraform {
-  source = "../../../modules/ecr"
+include {
+  path = find_in_parent_folders("common.hcl")
 }
 
-include {
-  path = "${get_terragrunt_dir()}/../common.hcl"
+terraform {
+  source = "../../../modules/ecr"
 }
 
 inputs = {
