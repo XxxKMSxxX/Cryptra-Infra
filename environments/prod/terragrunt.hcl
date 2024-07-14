@@ -22,5 +22,5 @@ dependencies {
 }
 
 include {
-  path = find_in_parent_folders("common.hcl")
+  path = "${get_terragrunt_dir()}/common.hcl"
 }
