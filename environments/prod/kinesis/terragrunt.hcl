@@ -2,7 +2,6 @@ locals {
   common_vars = yamldecode(file(find_in_parent_folders("common.yaml")))
 }
 
-
 terraform {
   source = "../../../modules/kinesis"
 }

@@ -8,7 +8,6 @@ on:
 env:
   AWS_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.IAM_ROLE_NAME }}
   AWS_DEFAULT_REGION: ap-northeast-1
-  TF_VERSION: 1.9.2
 
 permissions:
   id-token: write
@@ -96,11 +95,6 @@ jobs:
 
       - name: Install tools via Aqua
         run: aqua install
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
