@@ -34,35 +34,39 @@ jobs:
   terragrunt:
     needs: setup
     if: needs.setup.outputs.env_changes == 'true'
-    uses: ./.github/workflows/common.yml
-    with:
-      working-directory: environments/prod
-
+    runs-on: ubuntu-latest
     steps:
+      - name: Common Setup
+        uses: ./.github/workflows/common_setup.yml
+        with:
+          working-directory: environments/prod
+
       - name: Initialize Terragrunt
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: environments/prod
         run: terragrunt run-all init --terragrunt-non-interactive
 
       - name: Check Terragrunt format
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: environments/prod
         run: terragrunt run-all fmt -check
 
       - name: Validate Terragrunt
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: environments/prod
         run: terragrunt run-all validate
 
       - name: Run Terragrunt plan
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: environments/prod
         run: terragrunt run-all plan
 
   terraform:
     needs: setup
     if: needs.setup.outputs.mod_changes == 'true'
-    uses: ./.github/workflows/common.yml
-    with:
-      working-directory: modules
-
+    runs-on: ubuntu-latest
     steps:
+      - name: Common Setup
+        uses: ./.github/workflows/common_setup.yml
+        with:
+          working-directory: modules
+
       - name: Run TFsec
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}

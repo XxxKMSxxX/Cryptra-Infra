@@ -1,4 +1,4 @@
-name: common
+name: Common Setup
 
 on:
   workflow_call:
@@ -8,7 +8,7 @@ on:
         type: string
 
 jobs:
-  common:
+  common-setup:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

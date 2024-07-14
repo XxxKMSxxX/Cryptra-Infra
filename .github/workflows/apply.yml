@@ -19,15 +19,16 @@ permissions:
 jobs:
   apply-terragrunt:
     runs-on: ubuntu-latest
-    uses: ./.github/workflows/common.yml
-    with:
-      working-directory: environments/prod
-
     steps:
+      - name: Common Setup
+        uses: ./.github/workflows/common_setup.yml
+        with:
+          working-directory: environments/prod
+
       - name: Initialize Terragrunt
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: environments/prod
         run: terragrunt run-all init --terragrunt-non-interactive
 
       - name: Apply Terragrunt configuration
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: environments/prod
         run: terragrunt run-all apply --terragrunt-non-interactive
