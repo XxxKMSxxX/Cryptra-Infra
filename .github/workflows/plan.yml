@@ -22,7 +22,7 @@ jobs:
       envs_changed: ${{ steps.envs_changes.outputs.changes }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Get changed modules dirs
         uses: dorny/paths-filter@v2
@@ -45,6 +45,9 @@ jobs:
     if: needs.setup.outputs.envs_changed != '[]'
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Common Setup
         uses: ./.github/workflows/common_setup.yml
 
@@ -69,6 +72,9 @@ jobs:
     if: needs.setup.outputs.modules_changed != '[]'
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Common Setup
         uses: ./.github/workflows/common_setup.yml
 

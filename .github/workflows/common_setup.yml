@@ -7,9 +7,6 @@ jobs:
   common-setup:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Setup aqua
         uses: aquaproj/aqua-installer@v3.0.1
         with:
