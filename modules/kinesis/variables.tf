@@ -5,5 +5,5 @@ variable "project_name" {
 
 variable "collects" {
   description = "The collects configuration"
-  type = map(map(list(string)))
+  type        = map(map(list(string)))
 }
