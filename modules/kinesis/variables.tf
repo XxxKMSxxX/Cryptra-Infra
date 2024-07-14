@@ -4,6 +4,6 @@ variable "project_name" {
 }
 
 variable "collects" {
-  description = "The trading pairs for different exchanges"
-  type        = map(any)
+  description = "The collects configuration"
+  type        = map(map(list(string)))
 }

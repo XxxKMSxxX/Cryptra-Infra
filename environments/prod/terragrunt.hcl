@@ -6,7 +6,7 @@ remote_state {
   }
   config = {
     bucket = "cryptra-prod-terraform-state"
-    key    = "environments/prod/terraform.tfstate"
+    prefix = "prod/terraform.tfstate"
     region = "ap-northeast-1"
     encrypt = true
     s3_bucket_tags = {
@@ -19,8 +19,4 @@ remote_state {
 
 dependencies {
   paths = ["./ecr", "./kinesis"]
-}
-
-include {
-  path = "${get_terragrunt_dir()}/common.hcl"
 }
