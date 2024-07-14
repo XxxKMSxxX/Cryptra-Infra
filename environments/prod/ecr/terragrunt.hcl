@@ -1,9 +1,10 @@
 include {
-  path = find_in_parent_folders("common.hcl")
+  path = find_in_parent_folders("terragrunt.hcl")
 }
 
 locals {
-  common_vars = yamldecode(file(find_in_parent_folders("env.yaml")))
+  common_vars  = yamldecode(file(find_in_parent_folders("env.yaml")))
+  project_name = local.common_vars.project_name
 }
 
 terraform {
@@ -11,5 +12,5 @@ terraform {
 }
 
 inputs = {
-  repository_name = "${local.common_vars.project_name}-collector"
+  repository_name = "${local.project_name}-collector"
 }
