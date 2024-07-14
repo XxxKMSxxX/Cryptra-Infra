@@ -18,22 +18,31 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      env_changes: ${{ steps.check.outputs.env_changes }}
-      mod_changes: ${{ steps.check.outputs.mod_changes }}
+      modules_changed: ${{ steps.modules_changes.outputs.changes }}
+      envs_changed: ${{ steps.envs_changes.outputs.changes }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Check for changes in environments and modules
-        id: check
-        run: |
-          git diff --name-only HEAD~1 HEAD > changes.txt
-          echo "::set-output name=env_changes::$(grep -q '^environments/' changes.txt && echo true || echo false)"
-          echo "::set-output name=mod_changes::$(grep -q '^modules/' changes.txt && echo true || echo false)"
+      - name: Get changed modules dirs
+        uses: dorny/paths-filter@v2
+        id: modules_changes
+        with:
+          filters: |
+            modules:
+              - 'modules/**'
+
+      - name: Get changed envs dirs
+        uses: dorny/paths-filter@v2
+        id: envs_changes
+        with:
+          filters: |
+            environments:
+              - 'environments/**'
 
   terragrunt:
     needs: setup
-    if: needs.setup.outputs.env_changes == 'true'
+    if: needs.setup.outputs.envs_changed != '[]'
     runs-on: ubuntu-latest
     steps:
       - name: Common Setup
@@ -59,7 +68,7 @@ jobs:
 
   terraform:
     needs: setup
-    if: needs.setup.outputs.mod_changes == 'true'
+    if: needs.setup.outputs.modules_changed != '[]'
     runs-on: ubuntu-latest
     steps:
       - name: Common Setup
@@ -83,7 +92,7 @@ jobs:
   release-pull-request:
     needs: [terragrunt, terraform]
     runs-on: ubuntu-latest
-    if: needs.setup.outputs.env_changes == 'true' || needs.setup.outputs.mod_changes == 'true'
+    if: needs.setup.outputs.envs_changed != '[]' || needs.setup.outputs.modules_changed != '[]'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
