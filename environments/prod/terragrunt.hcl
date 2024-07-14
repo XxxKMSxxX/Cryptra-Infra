@@ -38,7 +38,7 @@ EOF
 }
 
 locals {
-  project_name = "Cryptra"
+  project_name = "cryptra"
 
   collects = {
     bybit = {
@@ -68,5 +68,5 @@ dependencies {
 }
 
 include {
-  path = find_in_parent_folders()
+  path = "${get_parent_terragrunt_dir()}/terragrunt.hcl"
 }
