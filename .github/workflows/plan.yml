@@ -47,9 +47,6 @@ jobs:
     steps:
       - name: Common Setup
         uses: ./.github/workflows/common_setup.yml
-        secrets:
-          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
       - name: Initialize Terragrunt
         working-directory: environments/prod
@@ -74,9 +71,6 @@ jobs:
     steps:
       - name: Common Setup
         uses: ./.github/workflows/common_setup.yml
-        secrets:
-          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
       - name: Run TFsec
         env:
