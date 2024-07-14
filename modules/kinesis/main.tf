@@ -1,7 +1,7 @@
 resource "aws_kinesis_stream" "kinesis_streams" {
   for_each = { for stream in local.streams : "${stream.exchange}-${stream.contract_type}-${stream.symbol}" => stream }
 
-  name             = "${var.project_name}-${each.value.exchange}-${each.value.contract_type}-${each.value.symbol}"
+  name             = lower("${var.project_name}-${each.value.exchange}-${each.value.contract_type}-${each.value.symbol}")
   shard_count      = 1
   retention_period = 24
 
@@ -16,6 +16,6 @@ resource "aws_kinesis_stream" "kinesis_streams" {
   ]
 
   tags = {
-    Name = "${var.project_name}-${each.value.exchange}-${each.value.contract_type}-${each.value.symbol}"
+    Name = lower("${var.project_name}-${each.value.exchange}-${each.value.contract_type}-${each.value.symbol}")
   }
 }
