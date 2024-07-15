@@ -19,8 +19,7 @@ locals {
 
 inputs = {
   project_name  = include.root.locals.conf.project_name
-  region        = include.root.locals.conf.region
-  vpc_id        = local.vpc_id
   instance_type = local.instance_type
+  vpc_id        = local.vpc_id
   subnet_ids    = local.subnet_ids
 }
