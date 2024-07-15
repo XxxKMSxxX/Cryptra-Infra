@@ -71,11 +71,3 @@ resource "aws_autoscaling_group" "ecs" {
     propagate_at_launch = true
   }
 }
-
-output "ecs_cluster_name" {
-  value = aws_ecs_cluster.this.name
-}
-
-output "ecs_instance_profile_arn" {
-  value = aws_iam_instance_profile.ecs_instance_profile.arn
-}
