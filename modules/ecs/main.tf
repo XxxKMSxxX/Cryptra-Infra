@@ -107,7 +107,6 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
           value = var.aws_region
         }
       ]
-      command = ["sh", "-c", "python -Bum collector ${EXCHANGE} ${CONTRACT} ${SYMBOL} ${AWS_REGION}"]
     }
   ])
 }
