@@ -10,6 +10,7 @@ on:
 env:
   AWS_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.IAM_ROLE_NAME }}
   AWS_DEFAULT_REGION: ap-northeast-1
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
 permissions:
   id-token: write
@@ -43,6 +44,4 @@ jobs:
 
       - name: Apply Terragrunt configuration
         working-directory: environments/prod
-        env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: terragrunt run-all apply --terragrunt-non-interactive
