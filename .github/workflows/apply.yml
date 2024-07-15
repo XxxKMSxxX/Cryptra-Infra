@@ -43,4 +43,6 @@ jobs:
 
       - name: Apply Terragrunt configuration
         working-directory: environments/prod
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: terragrunt run-all apply --terragrunt-non-interactive
