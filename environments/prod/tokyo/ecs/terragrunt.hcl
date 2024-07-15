@@ -15,7 +15,7 @@ locals {
     "subnet-0fd0dc95fec72eea9",
     "subnet-05493d8c872b22de6"
   ]
-  aws_account_id = getenv("AWS_ACCOUNT_ID")
+  aws_account_id = get_env("AWS_ACCOUNT_ID")
 }
 
 inputs = {
