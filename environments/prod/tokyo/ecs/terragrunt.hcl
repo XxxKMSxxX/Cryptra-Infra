@@ -25,5 +25,5 @@ inputs = {
   instance_type = local.instance_type
   vpc_id        = local.vpc_id
   subnet_ids    = local.subnet_ids
-  ecr_registry  = "${locals.aws_account_id}.dkr.ecr.ap-northeast-1.amazonaws.com/${include.root.locals.conf.project_name}-collector"
+  ecr_registry  = "${local.aws_account_id}.dkr.ecr.ap-northeast-1.amazonaws.com/${include.root.locals.conf.project_name}-collector"
 }
