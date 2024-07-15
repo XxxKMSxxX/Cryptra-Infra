@@ -184,9 +184,44 @@ resource "aws_iam_role" "ecs_service_linked_role" {
   EOF
 }
 
+resource "aws_iam_policy" "ecs_custom_service_policy" {
+  name        = "${var.project_name}-ecs-service-policy"
+  description = "Custom policy for ECS service role"
+  policy      = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ecs:CreateCluster",
+          "ecs:DeleteCluster",
+          "ecs:DeregisterContainerInstance",
+          "ecs:DiscoverPollEndpoint",
+          "ecs:Poll",
+          "ecs:RegisterContainerInstance",
+          "ecs:StartTelemetrySession",
+          "ecs:Submit*",
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:Describe*",
+          "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+          "elasticloadbalancing:Describe*",
+          "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        "Resource": "*"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy_attachment" "ecs_service_linked_role_attachment" {
   role       = aws_iam_role.ecs_service_linked_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSServiceRolePolicy"
+  policy_arn = aws_iam_policy.ecs_custom_service_policy.arn
 }
 
 resource "aws_ecs_service" "this" {
