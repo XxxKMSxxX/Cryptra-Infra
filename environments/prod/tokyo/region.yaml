@@ -1,6 +1,4 @@
-aws_region: "ap-northeast-1"
-environment: "prod"
-project_name: "cryptra"
+region: "ap-northeast-1"
 collects: {
   bybit: {
     spot     : ["BTCUSDT", "ETHUSDT", "SOLUSDT"],
