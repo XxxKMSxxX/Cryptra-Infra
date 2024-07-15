@@ -217,9 +217,5 @@ resource "aws_ecs_service" "this" {
   deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
 
-  depends_on = [
-    aws_lb_listener.app,
-    aws_iam_role.ecs_service_linked_role,
-    aws_iam_role_policy_attachment.ecs_service_linked_role_attachment
-  ]
+  depends_on = [aws_lb_listener.app]
 }
