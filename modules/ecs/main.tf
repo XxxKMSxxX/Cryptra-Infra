@@ -166,6 +166,29 @@ resource "aws_lb_listener" "app" {
   }
 }
 
+resource "aws_iam_role" "ecs_service_linked_role" {
+  name               = "AWSServiceRoleForECS"
+  assume_role_policy = <<-EOF
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "ecs.amazonaws.com"
+          },
+          "Action": "sts:AssumeRole"
+        }
+      ]
+    }
+  EOF
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_service_linked_role_attachment" {
+  role       = aws_iam_role.ecs_service_linked_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSServiceRolePolicy"
+}
+
 resource "aws_ecs_service" "this" {
   for_each        = aws_ecs_task_definition.ecs_task_definitions
   name            = "${var.project_name}-${each.key}-service"
@@ -194,5 +217,9 @@ resource "aws_ecs_service" "this" {
   deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
 
-  depends_on = [aws_lb_listener.app]
+  depends_on = [
+    aws_lb_listener.app,
+    aws_iam_role.ecs_service_linked_role,
+    aws_iam_role_policy_attachment.ecs_service_linked_role_attachment
+  ]
 }
