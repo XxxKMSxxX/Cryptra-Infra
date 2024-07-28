@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+
 resource "aws_ecs_cluster" "this" {
   name = "${var.project_name}-cluster"
 }
