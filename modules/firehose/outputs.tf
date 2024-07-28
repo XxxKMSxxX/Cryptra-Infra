@@ -35,5 +35,5 @@ output "firehose_role_arn" {
 
 output "kinesis_stream_arn" {
   description = "The ARN of the Kinesis Stream used as the source"
-  value       = aws_kinesis_stream.kinesis_stream.arn
+  value       = data.aws_kinesis_stream.existing_kinesis_stream.arn
 }
