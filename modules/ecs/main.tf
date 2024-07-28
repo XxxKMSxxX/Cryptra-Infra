@@ -103,6 +103,10 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
           value = each.value.symbol
         },
         {
+          name  = "AWS_ROLE_ARN"
+          value = var.aws_role_arn
+        },
+        {
           name  = "AWS_REGION"
           value = var.aws_region
         }
