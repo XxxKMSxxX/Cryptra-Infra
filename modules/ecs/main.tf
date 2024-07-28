@@ -71,7 +71,8 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
     lower("${task.exchange}-${task.contract_type}-${task.symbol}") => task
   }
 
-  family = "${var.project_name}-${each.key}-task"
+  family       = "${var.project_name}-${each.key}-task"
+  network_mode = "bridge"
   container_definitions = jsonencode([
     {
       name      = "app"
@@ -82,7 +83,7 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       portMappings = [
         {
           containerPort = 80
-          hostPort      = 80
+          hostPort      = 0
         }
       ]
       environment = [
@@ -178,11 +179,6 @@ resource "aws_ecs_service" "this" {
     target_group_arn = aws_lb_target_group.app.arn
     container_name   = "app"
     container_port   = 80
-  }
-
-  network_configuration {
-    subnets         = var.subnet_ids
-    security_groups = [aws_security_group.ecs.id]
   }
 
   health_check_grace_period_seconds = 60
