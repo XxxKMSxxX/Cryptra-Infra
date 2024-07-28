@@ -72,7 +72,7 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
   }
 
   family       = "${var.project_name}-${each.key}-task"
-  network_mode = "bridge"
+  network_mode = "awsvpc"
   container_definitions = jsonencode([
     {
       name      = "app"
