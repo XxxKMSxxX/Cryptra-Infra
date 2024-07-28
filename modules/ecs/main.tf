@@ -66,7 +66,7 @@ resource "aws_autoscaling_group" "ecs" {
 }
 
 resource "aws_cloudwatch_log_group" "ecs_log_group" {
-  name              = "/ecs/${var.project_name}"
+  name              = "/${var.project_name}/ecs"
   retention_in_days = 1
   tags              = var.tags
 }
@@ -111,7 +111,7 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = "/ecs/${var.project_name}"
+          awslogs-group         = "/${var.project_name}/ecs"
           awslogs-region        = var.aws_region
           awslogs-stream-prefix = "ecs"
         }
