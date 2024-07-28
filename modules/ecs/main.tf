@@ -190,12 +190,12 @@ resource "aws_iam_role" "ecs_service_linked_role" {
 resource "aws_iam_policy" "ecs_custom_service_policy" {
   name        = "${var.project_name}-ecs-service-policy"
   description = "Custom policy for ECS service role"
-  policy      = jsonencode({
-    "Version": "2012-10-17",
-    "Statement": [
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
       {
-        "Effect": "Allow",
-        "Action": [
+        "Effect" : "Allow",
+        "Action" : [
           "ecs:CreateCluster",
           "ecs:DeleteCluster",
           "ecs:DeregisterContainerInstance",
@@ -216,7 +216,7 @@ resource "aws_iam_policy" "ecs_custom_service_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],
-        "Resource": "*"
+        "Resource" : "*"
       }
     ]
   })
