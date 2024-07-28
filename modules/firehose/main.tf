@@ -22,8 +22,8 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
   extended_s3_configuration {
     role_arn           = aws_iam_role.firehose_role.arn
     bucket_arn         = aws_s3_bucket.bucket.arn
-    buffering_size     = 512
-    buffering_interval = 3600
+    buffering_size     = 128
+    buffering_interval = 900
     compression_format = "UNCOMPRESSED"
 
     dynamic_partitioning_configuration {
