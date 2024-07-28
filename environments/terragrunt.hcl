@@ -5,6 +5,11 @@ locals {
     try(yamldecode(file(find_in_parent_folders("region.yaml"))), {}),
     try(yamldecode(file(find_in_parent_folders("collects.yaml"))), {}),
   )
+  tags = {
+    Project     = local.conf.project_name
+    Environment = local.conf.environment
+    Terraform   = "true"
+  }
 }
 
 remote_state {
@@ -18,11 +23,7 @@ remote_state {
     key    = "${path_relative_to_include()}/terraform.tfstate"
     region = local.conf.region
     encrypt = true
-    s3_bucket_tags = {
-      "Terraform"   = "true"
-      "Environment" = local.conf.environment
-      "Project"     = local.conf.project_name
-    }
+    s3_bucket_tags = local.tags
   }
 }
 
