@@ -12,6 +12,5 @@ resource "aws_kinesis_stream" "this" {
     "ReadProvisionedThroughputExceeded",
     "IteratorAgeMilliseconds",
   ]
-
   tags = var.tags
 }
