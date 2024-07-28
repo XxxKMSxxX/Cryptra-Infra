@@ -10,5 +10,5 @@ terraform {
 
 inputs = {
   repository_name = "${include.root.locals.conf.project_name}-collector"
-  tags            = include.root.locals.conf.tags
+  tags            = include.root.locals.tags
 }
