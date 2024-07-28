@@ -89,11 +89,6 @@ resource "aws_iam_role" "ecs_task_role" {
   assume_role_policy = data.aws_iam_policy_document.ecs_task_role_assume_policy.json
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_task_execution_policy" {
-  role       = aws_iam_role.ecs_task_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
 resource "aws_iam_policy" "custom_ecs_task_policy" {
   name = "${var.project_name}-ecs-task-policy"
   policy = jsonencode({
@@ -118,9 +113,9 @@ resource "aws_iam_policy" "custom_ecs_task_policy" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_task_custom_policy_attachment" {
-  role       = aws_iam_role.ecs_task_role.name
+resource "aws_iam_policy_attachment" "ecs_task_policy_attachment" {
   policy_arn = aws_iam_policy.custom_ecs_task_policy.arn
+  roles      = [aws_iam_role.ecs_task_role.name]
 }
 
 resource "aws_ecs_task_definition" "ecs_task_definitions" {
