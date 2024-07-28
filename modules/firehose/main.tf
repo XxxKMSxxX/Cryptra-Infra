@@ -86,7 +86,6 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
 
 resource "aws_glue_catalog_database" "my_database" {
   name = "${var.project_name}-database"
-  tags = var.tags
 }
 
 resource "aws_glue_catalog_table" "my_table" {
@@ -160,8 +159,6 @@ resource "aws_glue_catalog_table" "my_table" {
       serialization_library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
     }
   }
-
-  tags = var.tags
 }
 
 resource "aws_s3_bucket" "bucket" {
