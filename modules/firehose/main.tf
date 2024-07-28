@@ -5,7 +5,7 @@ data "aws_kinesis_stream" "existing_kinesis_stream" {
 }
 
 resource "aws_cloudwatch_log_group" "firehose_log_group" {
-  name              = "/firehose/${var.project_name}"
+  name              = "/${var.project_name}/firehose"
   retention_in_days = 1
   tags              = var.tags
 }
@@ -247,7 +247,7 @@ resource "aws_iam_role_policy" "firehose_policy" {
           "logs:CreateLogStream",
           "logs:CreateLogGroup"
         ],
-        Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/firehose/${var.project_name}:*"
+        Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/${var.project_name}/firehose:*"
       }
     ]
   })
