@@ -71,15 +71,15 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
     lower("${task.exchange}-${task.contract_type}-${task.symbol}") => task
   }
 
-  family       = "${var.project_name}-${each.key}-task"
-  network_mode = "awsvpc"
+  family = "${var.project_name}-${each.key}-task"
+  # network_mode = "awsvpc"
   container_definitions = jsonencode([
     {
-      name      = "app"
+      name      = "${var.project_name}-${each.key}"
       image     = "${var.ecr_registry}:latest"
       essential = true
-      memory    = 512
-      cpu       = 256
+      # memory    = 512
+      # cpu       = 256
       portMappings = [
         {
           containerPort = 80
