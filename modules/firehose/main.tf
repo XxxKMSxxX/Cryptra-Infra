@@ -200,7 +200,21 @@ resource "aws_iam_role_policy" "firehose_policy" {
         Action = [
           "glue:GetTable",
           "glue:GetTableVersion",
-          "glue:GetTableVersions"
+          "glue:GetTableVersions",
+          "glue:CreateDatabase",
+          "glue:DeleteDatabase",
+          "glue:GetDatabase",
+          "glue:GetDatabases",
+          "glue:UpdateDatabase"
+        ],
+        Resource = "arn:aws:glue:${var.aws_region}:${data.aws_caller_identity.current.account_id}:catalog"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "firehose:CreateDeliveryStream",
+          "firehose:PutRecord",
+          "firehose:PutRecordBatch"
         ],
         Resource = "*"
       }
