@@ -4,6 +4,11 @@ data "aws_kinesis_stream" "existing_kinesis_stream" {
   name = var.stream_name
 }
 
+resource "aws_cloudwatch_log_group" "firehose_log_group" {
+  name              = "/firehose/${var.project_name}"
+  retention_in_days = 1
+}
+
 resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
   name        = "${var.project_name}-kinesis-firehose-extended-s3-stream"
   destination = "extended_s3"
@@ -66,6 +71,12 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
           parameter_value = "{exchange:.exchange,contract:.contract,symbol:.symbol}"
         }
       }
+    }
+
+    cloudwatch_logging_options {
+      enabled         = true
+      log_group_name  = aws_cloudwatch_log_group.firehose_log_group.name
+      log_stream_name = "firehose-delivery"
     }
   }
 }
@@ -219,6 +230,15 @@ resource "aws_iam_role_policy" "firehose_policy" {
           "firehose:PutRecordBatch"
         ],
         Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:PutLogEvents",
+          "logs:CreateLogStream",
+          "logs:CreateLogGroup"
+        ],
+        Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/firehose/${var.project_name}:*"
       }
     ]
   })
