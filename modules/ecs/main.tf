@@ -80,6 +80,14 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       essential = true
       memory    = 512
       cpu       = 256
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = "/ecs/${var.project_name}"
+          awslogs-region        = var.aws_region
+          awslogs-stream-prefix = "ecs"
+        }
+      }
       portMappings = [
         {
           containerPort = 80
