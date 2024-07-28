@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+
 data "aws_kinesis_stream" "existing_kinesis_stream" {
   name = var.stream_name
 }
@@ -42,7 +44,7 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
 
       schema_configuration {
         role_arn      = aws_iam_role.firehose_role.arn
-        catalog_id    = "AWS"
+        catalog_id    = data.aws_caller_identity.current.account_id
         database_name = aws_glue_catalog_database.my_database.name
         table_name    = aws_glue_catalog_table.my_table.name
         region        = var.aws_region
