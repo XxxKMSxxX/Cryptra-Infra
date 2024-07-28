@@ -77,8 +77,8 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       name      = "${var.project_name}-${each.key}"
       image     = "${var.ecr_registry}:latest"
       essential = true
-      # memory    = 512
-      # cpu       = 256
+      memory    = 512
+      cpu       = 256
       portMappings = [
         {
           containerPort = 80
