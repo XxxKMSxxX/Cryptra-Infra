@@ -71,24 +71,54 @@ resource "aws_cloudwatch_log_group" "ecs_log_group" {
   tags              = var.tags
 }
 
-resource "aws_iam_role" "ecs_task_role" {
-  name = "${var.project_name}-ecs-task-role"
+data "aws_iam_policy_document" "ecs_task_role_assume_policy" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
 
-  assume_role_policy = jsonencode({
+resource "aws_iam_role" "ecs_task_role" {
+  name               = "${var.project_name}-ecs-task-role"
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_role_assume_policy.json
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_policy" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_policy" "custom_ecs_task_policy" {
+  name = "${var.project_name}-ecs-task-policy"
+  policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [{
-      Effect = "Allow",
-      Principal = {
-        Service = "ecs-tasks.amazonaws.com"
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "sts:AssumeRole"
+        ],
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/cryptra-collector-role"
       },
-      Action = "sts:AssumeRole"
-    }]
+      {
+        Effect = "Allow",
+        Action = [
+          "kinesis:PutRecord",
+          "kinesis:PutRecords"
+        ],
+        Resource = "*"
+      }
+    ]
   })
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_task_policy_attachment" {
+resource "aws_iam_role_policy_attachment" "ecs_task_custom_policy_attachment" {
   role       = aws_iam_role.ecs_task_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+  policy_arn = aws_iam_policy.custom_ecs_task_policy.arn
 }
 
 resource "aws_ecs_task_definition" "ecs_task_definitions" {
