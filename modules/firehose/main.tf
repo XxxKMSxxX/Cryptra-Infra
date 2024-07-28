@@ -22,16 +22,16 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
   extended_s3_configuration {
     role_arn           = aws_iam_role.firehose_role.arn
     bucket_arn         = aws_s3_bucket.bucket.arn
-    buffering_size     = 64
-    buffering_interval = 300
+    buffering_size     = 512
+    buffering_interval = 3600
     compression_format = "UNCOMPRESSED"
 
     dynamic_partitioning_configuration {
       enabled = true
     }
 
-    prefix              = "data/exchange=!{partitionKeyFromQuery:exchange}/contract=!{partitionKeyFromQuery:contract}/symbol=!{partitionKeyFromQuery:symbol}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
-    error_output_prefix = "errors/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/!{firehose:error-output-type}/"
+    prefix              = "data/!{partitionKeyFromQuery:exchange}/!{partitionKeyFromQuery:contract}/!{partitionKeyFromQuery:symbol}/!{partitionKeyFromQuery:year}/!{partitionKeyFromQuery:month}/!{partitionKeyFromQuery:day}/"
+    error_output_prefix = "errors/!{timestamp:yyyy}/!{timestamp:MM}/!{timestamp:dd}/!{firehose:error-output-type}/"
 
     data_format_conversion_configuration {
       enabled = true
@@ -69,7 +69,7 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
         }
         parameters {
           parameter_name  = "MetadataExtractionQuery"
-          parameter_value = "{exchange:.exchange,contract:.contract,symbol:.symbol}"
+          parameter_value = "{exchange:.exchange,contract:.contract,symbol:.symbol,year:(.timestamp|strptime(\"%Y-%m-%dT%H:%M:%S%z\")|strftime(\"%Y\")),month:(.timestamp|strptime(\"%Y-%m-%dT%H:%M:%S%z\")|strftime(\"%m\")),day:(.timestamp|strptime(\"%Y-%m-%dT%H:%M:%S%z\")|strftime(\"%d\"))}"
         }
       }
     }
