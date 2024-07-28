@@ -65,6 +65,11 @@ resource "aws_autoscaling_group" "ecs" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "ecs_log_group" {
+  name              = "/ecs/${var.project_name}"
+  retention_in_days = 1
+}
+
 resource "aws_ecs_task_definition" "ecs_task_definitions" {
   for_each = {
     for task in local.tasks :
