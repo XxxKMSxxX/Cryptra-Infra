@@ -1,4 +1,4 @@
-name: plan
+name: CI
 
 on:
   push:

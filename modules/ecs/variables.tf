@@ -13,6 +13,11 @@ variable "aws_region" {
   type        = string
 }
 
+variable "aws_role_arn" {
+  description = "AWS role arn"
+  type        = string
+}
+
 variable "instance_type" {
   description = "The EC2 instance type"
   type        = string
@@ -32,4 +37,10 @@ variable "subnet_ids" {
 variable "ecr_registry" {
   description = "ECR registry URI"
   type        = string
+}
+
+variable "tags" {
+  description = "A map of tags to assign to the repository"
+  type        = map(string)
+  default     = {}
 }
