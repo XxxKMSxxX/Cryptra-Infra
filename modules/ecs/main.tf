@@ -74,7 +74,7 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
   family = "${var.project_name}-${each.key}-task"
   container_definitions = jsonencode([
     {
-      name      = "${var.project_name}-${each.key}"
+      name      = "app"
       image     = "${var.ecr_registry}:latest"
       essential = true
       memory    = 512
