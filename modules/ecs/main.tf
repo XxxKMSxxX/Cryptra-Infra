@@ -25,23 +25,22 @@ data "aws_ami" "ecs" {
   }
 }
 
+data "aws_iam_policy_document" "ecs_instance_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
 resource "aws_iam_role" "ecs_instance_role" {
   name               = "${var.project_name}-ecs-instance-role"
-  assume_role_policy = <<-EOF
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Action": "sts:AssumeRole",
-          "Principal": {
-            "Service": "ec2.amazonaws.com"
-          },
-          "Effect": "Allow",
-          "Sid": ""
-        }
-      ]
-    }
-    EOF
+  assume_role_policy = data.aws_iam_policy_document.ecs_instance_assume_role.json
 }
 
 resource "aws_iam_instance_profile" "ecs_instance_profile" {
