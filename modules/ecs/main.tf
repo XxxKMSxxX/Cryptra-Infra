@@ -25,23 +25,22 @@ data "aws_ami" "ecs" {
   }
 }
 
+data "aws_iam_policy_document" "ecs_instance_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
 resource "aws_iam_role" "ecs_instance_role" {
   name               = "${var.project_name}-ecs-instance-role"
-  assume_role_policy = <<-EOF
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Action": "sts:AssumeRole",
-          "Principal": {
-            "Service": "ec2.amazonaws.com"
-          },
-          "Effect": "Allow",
-          "Sid": ""
-        }
-      ]
-    }
-    EOF
+  assume_role_policy = data.aws_iam_policy_document.ecs_instance_assume_role.json
 }
 
 resource "aws_iam_instance_profile" "ecs_instance_profile" {
@@ -101,6 +100,10 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
         {
           name  = "SYMBOL"
           value = each.value.symbol
+        },
+        {
+          name  = "AWS_ROLE_ARN"
+          value = var.aws_role_arn
         },
         {
           name  = "AWS_REGION"
@@ -187,12 +190,12 @@ resource "aws_iam_role" "ecs_service_linked_role" {
 resource "aws_iam_policy" "ecs_custom_service_policy" {
   name        = "${var.project_name}-ecs-service-policy"
   description = "Custom policy for ECS service role"
-  policy      = jsonencode({
-    "Version": "2012-10-17",
-    "Statement": [
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
       {
-        "Effect": "Allow",
-        "Action": [
+        "Effect" : "Allow",
+        "Action" : [
           "ecs:CreateCluster",
           "ecs:DeleteCluster",
           "ecs:DeregisterContainerInstance",
@@ -213,7 +216,7 @@ resource "aws_iam_policy" "ecs_custom_service_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],
-        "Resource": "*"
+        "Resource" : "*"
       }
     ]
   })

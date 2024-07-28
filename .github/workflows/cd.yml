@@ -1,4 +1,4 @@
-name: apply
+name: CD
 
 on:
   pull_request:
@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 jobs:
-  apply:
+  CD:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
