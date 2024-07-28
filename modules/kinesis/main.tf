@@ -1,10 +1,5 @@
-resource "aws_kinesis_stream" "kinesis_streams" {
-  for_each = {
-    for stream in local.streams :
-    lower("${stream.exchange}-${stream.contract_type}-${stream.symbol}") => stream
-  }
-
-  name             = each.key
+resource "aws_kinesis_stream" "this" {
+  name             = var.stream_name
   shard_count      = 1
   retention_period = 24
 
@@ -17,8 +12,4 @@ resource "aws_kinesis_stream" "kinesis_streams" {
     "ReadProvisionedThroughputExceeded",
     "IteratorAgeMilliseconds",
   ]
-
-  tags = {
-    Name = each.key
-  }
 }
