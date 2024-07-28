@@ -30,8 +30,8 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
       enabled = true
     }
 
-    prefix              = "data/exchange=!{partitionKeyFromQuery:exchange}/contract=!{partitionKeyFromQuery:contract}/symbol=!{partitionKeyFromQuery:symbol}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
-    error_output_prefix = "errors/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/!{firehose:error-output-type}/"
+    prefix              = "data/{partitionKeyFromQuery:exchange}/{partitionKeyFromQuery:contract}/{partitionKeyFromQuery:symbol}/{timestamp:yyyy}/{timestamp:MM}/{timestamp:dd}/"
+    error_output_prefix = "errors/{timestamp:yyyy}/{timestamp:MM}/{timestamp:dd}/{firehose:error-output-type}/"
 
     data_format_conversion_configuration {
       enabled = true
