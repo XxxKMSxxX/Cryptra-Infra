@@ -1,9 +1,5 @@
-resource "aws_kinesis_stream" "kinesis_stream" {
-  name             = var.stream_name
-  shard_count      = 1
-  retention_period = 24
-
-  tags = var.tags
+data "aws_kinesis_stream" "existing_kinesis_stream" {
+  name = var.stream_name
 }
 
 resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
@@ -11,7 +7,7 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
   destination = "extended_s3"
 
   kinesis_source_configuration {
-    kinesis_stream_arn = aws_kinesis_stream.kinesis_stream.arn
+    kinesis_stream_arn = data.aws_kinesis_stream.existing_kinesis_stream.arn
     role_arn           = aws_iam_role.firehose_role.arn
   }
 
@@ -153,11 +149,6 @@ resource "aws_s3_bucket" "bucket" {
   bucket = "${var.project_name}-collector"
 }
 
-resource "aws_s3_bucket_acl" "bucket_acl" {
-  bucket = aws_s3_bucket.bucket.id
-  acl    = "private"
-}
-
 data "aws_iam_policy_document" "firehose_assume_role" {
   statement {
     effect = "Allow"
@@ -202,7 +193,7 @@ resource "aws_iam_role_policy" "firehose_policy" {
           "kinesis:GetShardIterator",
           "kinesis:GetRecords"
         ],
-        Resource = aws_kinesis_stream.kinesis_stream.arn
+        Resource = data.aws_kinesis_stream.existing_kinesis_stream.arn
       },
       {
         Effect = "Allow",
