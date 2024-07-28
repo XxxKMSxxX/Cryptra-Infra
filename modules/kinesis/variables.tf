@@ -3,7 +3,7 @@ variable "project_name" {
   type        = string
 }
 
-variable "collects" {
-  description = "The collects configuration"
-  type        = map(map(list(string)))
+variable "stream_name" {
+  description = "The name of stream"
+  type        = string
 }

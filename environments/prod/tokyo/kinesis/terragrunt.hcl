@@ -10,5 +10,5 @@ terraform {
 
 inputs = {
   project_name = include.root.locals.conf.project_name
-  collects     = include.root.locals.conf.collects
+  stream_name  = "${include.root.locals.conf.project_name}-collector"
 }
