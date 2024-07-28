@@ -1,78 +1,218 @@
-# resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
-#   name        = "${var.project_name}-kinesis-firehose-extended-s3-stream"
-#   destination = "extended_s3"
+resource "aws_kinesis_stream" "kinesis_stream" {
+  name             = var.stream_name
+  shard_count      = 1
+  retention_period = 24
 
-#   extended_s3_configuration {
-#     role_arn   = aws_iam_role.firehose_role.arn
-#     bucket_arn = aws_s3_bucket.bucket.arn
+  tags = var.tags
+}
 
-#     buffering_size = 64
+resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
+  name        = "${var.project_name}-kinesis-firehose-extended-s3-stream"
+  destination = "extended_s3"
 
-#     # https://docs.aws.amazon.com/firehose/latest/dev/dynamic-partitioning.html
-#     dynamic_partitioning_configuration {
-#       enabled = "true"
-#     }
+  kinesis_source_configuration {
+    kinesis_stream_arn = aws_kinesis_stream.kinesis_stream.arn
+    role_arn           = aws_iam_role.firehose_role.arn
+  }
 
-#     # Example prefix using partitionKeyFromQuery, applicable to JQ processor
-#     prefix              = "data/customer_id=!{partitionKeyFromQuery:customer_id}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
-#     error_output_prefix = "errors/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/!{firehose:error-output-type}/"
+  extended_s3_configuration {
+    role_arn           = aws_iam_role.firehose_role.arn
+    bucket_arn         = aws_s3_bucket.bucket.arn
+    buffering_size     = 64
+    buffering_interval = 300
+    compression_format = "UNCOMPRESSED"
 
-#     processing_configuration {
-#       enabled = "true"
+    dynamic_partitioning_configuration {
+      enabled = true
+    }
 
-#       # Multi-record deaggregation processor example
-#       processors {
-#         type = "RecordDeAggregation"
-#         parameters {
-#           parameter_name  = "SubRecordType"
-#           parameter_value = "JSON"
-#         }
-#       }
+    prefix              = "data/exchange=!{partitionKeyFromQuery:exchange}/contract=!{partitionKeyFromQuery:contract}/symbol=!{partitionKeyFromQuery:symbol}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
+    error_output_prefix = "errors/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/!{firehose:error-output-type}/"
 
-#       # New line delimiter processor example
-#       processors {
-#         type = "AppendDelimiterToRecord"
-#       }
+    data_format_conversion_configuration {
+      enabled = true
 
-#       # JQ processor example
-#       processors {
-#         type = "MetadataExtraction"
-#         parameters {
-#           parameter_name  = "JsonParsingEngine"
-#           parameter_value = "JQ-1.6"
-#         }
-#         parameters {
-#           parameter_name  = "MetadataExtractionQuery"
-#           parameter_value = "{customer_id:.customer_id}"
-#         }
-#       }
-#     }
-#   }
-# }
+      input_format_configuration {
+        deserializer {
+          open_x_json_ser_de {}
+        }
+      }
 
-# resource "aws_s3_bucket" "bucket" {
-#   bucket = "${var.project_name}-collector"
-# }
+      output_format_configuration {
+        serializer {
+          parquet_ser_de {}
+        }
+      }
 
-# resource "aws_s3_bucket_acl" "bucket_acl" {
-#   bucket = aws_s3_bucket.bucket.id
-#   acl    = "private"
-# }
+      schema_configuration {
+        role_arn      = aws_iam_role.firehose_role.arn
+        catalog_id    = "AWS"
+        database_name = aws_glue_catalog_database.my_database.name
+        table_name    = aws_glue_catalog_table.my_table.name
+        region        = var.aws_region
+        version_id    = "LATEST"
+      }
+    }
 
-# data "aws_iam_policy_document" "firehose_assume_role" {
-#   statement {
-#     effect = "Allow"
+    processing_configuration {
+      enabled = true
 
-#     principals {
-#       type        = "Service"
-#       identifiers = ["firehose.amazonaws.com"]
-#     }
+      processors {
+        type = "MetadataExtraction"
+        parameters {
+          parameter_name  = "JsonParsingEngine"
+          parameter_value = "JQ-1.6"
+        }
+        parameters {
+          parameter_name  = "MetadataExtractionQuery"
+          parameter_value = "{exchange:.exchange,contract:.contract,symbol:.symbol}"
+        }
+      }
+    }
+  }
+}
 
-#     actions = ["sts:AssumeRole"]
-#   }
-# }
+resource "aws_glue_catalog_database" "my_database" {
+  name = "${var.project_name}-database"
+}
 
-# resource "aws_iam_role" "firehose_role" {
-#   name               = "${var.project_name}-firehose-role"
-#   assume_role_policy = data.aws_iam_policy_document.firehose_assume_role.json
-# }
+resource "aws_glue_catalog_table" "my_table" {
+  name          = "${var.project_name}-table"
+  database_name = aws_glue_catalog_database.my_database.name
+
+  storage_descriptor {
+    columns {
+      name = "timestamp"
+      type = "string"
+    }
+    columns {
+      name = "open"
+      type = "double"
+    }
+    columns {
+      name = "high"
+      type = "double"
+    }
+    columns {
+      name = "low"
+      type = "double"
+    }
+    columns {
+      name = "close"
+      type = "double"
+    }
+    columns {
+      name = "volume"
+      type = "double"
+    }
+    columns {
+      name = "buy_volume"
+      type = "double"
+    }
+    columns {
+      name = "sell_volume"
+      type = "double"
+    }
+    columns {
+      name = "count"
+      type = "int"
+    }
+    columns {
+      name = "buy_count"
+      type = "int"
+    }
+    columns {
+      name = "sell_count"
+      type = "int"
+    }
+    columns {
+      name = "value"
+      type = "double"
+    }
+    columns {
+      name = "buy_value"
+      type = "double"
+    }
+    columns {
+      name = "sell_value"
+      type = "double"
+    }
+
+    location      = "s3://${aws_s3_bucket.bucket.bucket}/"
+    input_format  = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
+    output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
+
+    ser_de_info {
+      name                  = "parquet"
+      serialization_library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+    }
+  }
+}
+
+resource "aws_s3_bucket" "bucket" {
+  bucket = "${var.project_name}-collector"
+}
+
+resource "aws_s3_bucket_acl" "bucket_acl" {
+  bucket = aws_s3_bucket.bucket.id
+  acl    = "private"
+}
+
+data "aws_iam_policy_document" "firehose_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["firehose.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "firehose_role" {
+  name               = "${var.project_name}-firehose-role"
+  assume_role_policy = data.aws_iam_policy_document.firehose_assume_role.json
+}
+
+resource "aws_iam_role_policy" "firehose_policy" {
+  role = aws_iam_role.firehose_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl",
+          "s3:PutObjectTagging",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          "${aws_s3_bucket.bucket.arn}",
+          "${aws_s3_bucket.bucket.arn}/*"
+        ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "kinesis:DescribeStream",
+          "kinesis:GetShardIterator",
+          "kinesis:GetRecords"
+        ],
+        Resource = aws_kinesis_stream.kinesis_stream.arn
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "glue:GetTable",
+          "glue:GetTableVersion",
+          "glue:GetTableVersions"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
