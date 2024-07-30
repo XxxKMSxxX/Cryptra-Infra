@@ -8,5 +8,8 @@
     "editor.defaultFormatter": "hashicorp.terraform",
     "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "file"
+  },
+  "[yaml]": {
+    "editor.formatOnSave": false
   }
 }
