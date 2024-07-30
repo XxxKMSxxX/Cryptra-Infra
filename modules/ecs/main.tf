@@ -125,8 +125,8 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       name      = "app"
       image     = "${var.ecr_registry}:latest"
       essential = true
-      memory    = 128 # 512MiB ピーク：12.1%
-      cpu       = 25  # 256ユニット ピーク：3.69%
+      memory    = 96 # 512MiB ピーク：12.1%
+      cpu       = 96 # 256ユニット ピーク：3.69%
       logConfiguration = {
         logDriver = "awslogs"
         options = {
