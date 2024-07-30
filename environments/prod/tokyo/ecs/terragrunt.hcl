@@ -10,7 +10,7 @@ terraform {
 
 locals {
   vpc_id        = "vpc-0fbffb61f92c041a2"
-  instance_type = "t3.micro"
+  instance_type = "t3.small"
   subnet_ids    = [
     "subnet-0fd0dc95fec72eea9",
     "subnet-05493d8c872b22de6"
