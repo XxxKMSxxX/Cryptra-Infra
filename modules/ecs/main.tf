@@ -137,7 +137,7 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       }
       portMappings = [
         {
-          containerPort = 80
+          containerPort = 8000
           hostPort      = 0
         }
       ]
