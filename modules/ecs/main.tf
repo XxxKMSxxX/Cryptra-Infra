@@ -224,7 +224,7 @@ resource "aws_lb_listener" "app" {
 
 resource "aws_ecs_service" "this" {
   for_each             = aws_ecs_task_definition.ecs_task_definitions
-  name                 = "${var.project_name}-${each.key}-service"
+  name                 = "${var.project_name}-collector-${each.key}-service"
   cluster              = aws_ecs_cluster.this.id
   task_definition      = each.value.arn
   desired_count        = 1
