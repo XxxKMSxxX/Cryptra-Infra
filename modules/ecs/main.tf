@@ -116,7 +116,7 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
     lower("${task.exchange}-${task.contract_type}-${task.symbol}") => task
   }
 
-  family        = "${var.project_name}-${each.key}-task"
+  family        = "${var.project_name}-collector-${each.key}-task"
   network_mode  = "bridge"
   task_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
@@ -125,8 +125,8 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       name      = "app"
       image     = "${var.ecr_registry}:latest"
       essential = true
-      memory    = 512
-      cpu       = 256
+      memory    = 128 # 512MiB ピーク：12.1%
+      cpu       = 25  # 256ユニット ピーク：3.69%
       logConfiguration = {
         logDriver = "awslogs"
         options = {
