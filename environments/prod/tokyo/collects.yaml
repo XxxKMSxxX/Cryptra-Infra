@@ -1,21 +1,21 @@
 collects: {
-  # binance: {
-  #   spot: [
-  #     "btcusdt",
-  #     "ethusdt",
-  #     "solusdt",
-  #   ],
-  #   usdt_perpetual: [
-  #     "btcusdt",
-  #     "ethusdt",
-  #     "solusdt"
-  #   ],
-  # },
+  binance: {
+    spot: [
+      "btcusdt",
+      "ethusdt",
+      "solusdt",
+    ],
+    usdt_perpetual: [
+      "btcusdt",
+      "ethusdt",
+      "solusdt"
+    ],
+  },
   bitflyer: {
-    # spot: [
-    #   "BTC_JPY",
-    #   "ETH_JPY"
-    # ],
+    spot: [
+      "BTC_JPY",
+      "ETH_JPY"
+    ],
     fx: [
       "FX_BTC_JPY"
     ],

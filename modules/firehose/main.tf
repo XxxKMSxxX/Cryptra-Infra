@@ -25,6 +25,7 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
     buffering_size     = 128
     buffering_interval = 900
     compression_format = "UNCOMPRESSED"
+    custom_time_zone   = "Asia/Tokyo"
 
     dynamic_partitioning_configuration {
       enabled = true
