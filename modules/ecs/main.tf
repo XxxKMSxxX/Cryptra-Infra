@@ -108,8 +108,6 @@ resource "aws_cloudwatch_log_group" "ecs_log_group" {
   retention_in_days = 1
 }
 
-
-
 resource "aws_ecs_task_definition" "ecs_task_definitions" {
   for_each = {
     for task in local.tasks :
@@ -137,7 +135,7 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       }
       portMappings = [
         {
-          containerPort = 8000
+          containerPort = 8080
           hostPort      = 0
         }
       ]
@@ -173,8 +171,8 @@ resource "aws_security_group" "ecs" {
   description = "ECS security group"
 
   ingress {
-    from_port   = 80
-    to_port     = 80
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -197,7 +195,7 @@ resource "aws_lb" "app" {
 
 resource "aws_lb_target_group" "app" {
   name     = "${var.project_name}-tg"
-  port     = 80
+  port     = 8080
   protocol = "HTTP"
   vpc_id   = var.vpc_id
 
@@ -213,7 +211,7 @@ resource "aws_lb_target_group" "app" {
 
 resource "aws_lb_listener" "app" {
   load_balancer_arn = aws_lb.app.arn
-  port              = "80"
+  port              = "8080"
   protocol          = "HTTP"
 
   default_action {
@@ -234,7 +232,7 @@ resource "aws_ecs_service" "this" {
   load_balancer {
     target_group_arn = aws_lb_target_group.app.arn
     container_name   = "app"
-    container_port   = 80
+    container_port   = 8080
   }
 
   health_check_grace_period_seconds = 60
