@@ -1,3 +1,8 @@
+variable "base_port" {
+  type    = number
+  default = 8080
+}
+
 locals {
   raw_tasks = flatten([
     for exchange_name, exchange in var.collects : [
