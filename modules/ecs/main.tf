@@ -109,10 +109,7 @@ resource "aws_cloudwatch_log_group" "ecs_log_group" {
 }
 
 resource "aws_ecs_task_definition" "ecs_task_definitions" {
-  for_each = {
-    for task in local.tasks :
-    lower("${task.exchange}-${task.contract_type}-${task.symbol}") => task
-  }
+  for_each = local.task_map
 
   family        = "${var.project_name}-collector-${each.key}-task"
   network_mode  = "bridge"
@@ -250,17 +247,17 @@ resource "aws_lb_listener" "app" {
 }
 
 resource "aws_ecs_service" "this" {
-  for_each = local.task_map
+  for_each = aws_ecs_task_definition.ecs_task_definitions
 
   name                 = "${var.project_name}-collector-${each.key}-service"
   cluster              = aws_ecs_cluster.this.id
-  task_definition      = aws_ecs_task_definition.ecs_task_definitions[each.key].arn
+  task_definition      = each.value.arn
   desired_count        = 1
   launch_type          = "EC2"
   force_new_deployment = true
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.app[local.tasks[each.value].host_port].arn
+    target_group_arn = aws_lb_target_group.app[each.key].arn
     container_name   = "app"
     container_port   = 80
   }
