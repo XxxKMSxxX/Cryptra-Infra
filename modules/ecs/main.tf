@@ -217,7 +217,6 @@ resource "aws_lb_target_group" "app" {
   for_each = {
     for task in local.tasks :
     replace(lower("${task.exchange}-${task.contract_type}-${task.symbol}"), "_", "-") => task
-  }
 
   name     = "${var.project_name}-${each.key}-tg"
   port     = each.value.host_port
