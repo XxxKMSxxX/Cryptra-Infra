@@ -250,7 +250,9 @@ resource "aws_lb_listener" "app" {
 }
 
 resource "aws_ecs_service" "this" {
-  for_each             = aws_ecs_task_definition.ecs_task_definitions
+  for_each             = {
+    for idx, task_def in aws_ecs_task_definition.ecs_task_definitions : "${local.tasks[idx].exchange}-${local.tasks[idx].contract_type}-${local.tasks[idx].symbol}" => task_def
+  }
   name                 = "${var.project_name}-collector-${each.key}-service"
   cluster              = aws_ecs_cluster.this.id
   task_definition      = each.value.arn
