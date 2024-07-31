@@ -17,7 +17,7 @@ locals {
   ])
 
   tasks = [
-    for idx, task in range(length(local.raw_tasks)) : {
+    for idx in range(length(local.raw_tasks)) : {
       exchange      = local.raw_tasks[idx].exchange,
       contract_type = local.raw_tasks[idx].contract_type,
       symbol        = local.raw_tasks[idx].symbol,
