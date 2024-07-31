@@ -135,8 +135,8 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       }
       portMappings = [
         {
-          containerPort = 80
-          hostPort      = 0
+          containerPort = 8080
+          hostPort      = each.value.host_port  # 固定ポートを割り当て
         }
       ]
       environment = [
@@ -214,8 +214,13 @@ resource "aws_lb" "app" {
 }
 
 resource "aws_lb_target_group" "app" {
-  name     = "${var.project_name}-tg"
-  port     = 80
+  for_each = {
+    for task in local.tasks :
+    lower("${task.exchange}-${task.contract_type}-${task.symbol}") => task
+  }
+
+  name     = "${var.project_name}-${each.key}-tg"
+  port     = each.value.host_port
   protocol = "HTTP"
   vpc_id   = var.vpc_id
 
@@ -230,13 +235,15 @@ resource "aws_lb_target_group" "app" {
 }
 
 resource "aws_lb_listener" "app" {
+  for_each = aws_lb_target_group.app
+
   load_balancer_arn = aws_lb.app.arn
   port              = "80"
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.app.arn
+    target_group_arn = each.value.arn
   }
 
   depends_on = [aws_lb_target_group.app]
@@ -252,7 +259,7 @@ resource "aws_ecs_service" "this" {
   force_new_deployment = true
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.app.arn
+    target_group_arn = aws_lb_target_group.app[each.key].arn
     container_name   = "app"
     container_port   = 80
   }
