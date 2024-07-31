@@ -109,7 +109,10 @@ resource "aws_cloudwatch_log_group" "ecs_log_group" {
 }
 
 resource "aws_ecs_task_definition" "ecs_task_definitions" {
-  for_each = local.task_map
+  for_each = {
+    for task in local.tasks :
+    lower("${task.exchange}-${task.contract_type}-${task.symbol}") => task
+  }
 
   family        = "${var.project_name}-collector-${each.key}-task"
   network_mode  = "bridge"
@@ -132,8 +135,8 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       }
       portMappings = [
         {
-          containerPort = 8080
-          hostPort      = each.value.host_port  # 固定ポートを割り当て
+          containerPort = var.container_port
+          hostPort      = each.value.host_port
         }
       ]
       environment = [
@@ -148,14 +151,6 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
         {
           name  = "SYMBOL"
           value = each.value.symbol
-        },
-        {
-          name  = "AWS_ROLE_ARN"
-          value = var.aws_role_arn
-        },
-        {
-          name  = "AWS_REGION"
-          value = var.aws_region
         }
       ]
     }
@@ -171,7 +166,7 @@ resource "aws_security_group" "ecs" {
     from_port       = 80
     to_port         = 80
     protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]  # ALBのセキュリティグループからのトラフィックを許可
+    security_groups = [aws_security_group.alb.id]
   }
 
   egress {
@@ -191,7 +186,7 @@ resource "aws_security_group" "alb" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # すべてのトラフィックを許可
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -206,7 +201,7 @@ resource "aws_lb" "app" {
   name               = "${var.project_name}-lb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]  # ALBセキュリティグループを使用
+  security_groups    = [aws_security_group.alb.id]
   subnets            = var.subnet_ids
 }
 
