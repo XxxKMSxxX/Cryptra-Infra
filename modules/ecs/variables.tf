@@ -44,3 +44,13 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "host_port_start" {
+  type    = number
+  default = 8080
+}
+
+variable "container_port" {
+  type    = number
+  default = 8080
+}
