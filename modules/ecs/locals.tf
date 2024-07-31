@@ -1,8 +1,3 @@
-variable "base_port" {
-  type    = number
-  default = 8080
-}
-
 locals {
   raw_tasks = flatten([
     for exchange_name, exchange in var.collects : [
@@ -21,12 +16,7 @@ locals {
       exchange      = local.raw_tasks[idx].exchange,
       contract_type = local.raw_tasks[idx].contract_type,
       symbol        = local.raw_tasks[idx].symbol,
-      host_port     = var.base_port + idx
+      host_port     = var.host_port_start + idx
     }
   ]
-
-  task_map = {
-    for idx, task in local.tasks : 
-    "${task.exchange}-${task.contract_type}-${task.symbol}" => idx
-  }
 }
