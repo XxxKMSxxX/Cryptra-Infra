@@ -123,8 +123,8 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       name      = "app"
       image     = "${var.ecr_registry}:latest"
       essential = true
-      memory    = 96 # 512MiB ピーク：12.1%
-      cpu       = 96 # 256ユニット ピーク：3.69%
+      memory    = 96
+      cpu       = 96
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -171,10 +171,30 @@ resource "aws_security_group" "ecs" {
   description = "ECS security group"
 
   ingress {
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]  # ALBのセキュリティグループからのトラフィックを許可
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group" "alb" {
+  name        = "${var.project_name}-alb-sg"
+  vpc_id      = var.vpc_id
+  description = "ALB security group"
+
+  ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]  # すべてのトラフィックを許可
   }
 
   egress {
@@ -189,7 +209,7 @@ resource "aws_lb" "app" {
   name               = "${var.project_name}-lb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.ecs.id]
+  security_groups    = [aws_security_group.alb.id]  # ALBセキュリティグループを使用
   subnets            = var.subnet_ids
 }
 
