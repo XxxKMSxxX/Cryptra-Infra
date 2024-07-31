@@ -216,10 +216,10 @@ resource "aws_lb" "app" {
 resource "aws_lb_target_group" "app" {
   for_each = {
     for task in local.tasks :
-    replace(lower("${task.exchange}-${task.contract_type}-${task.symbol}"), "_", "-") => task
+    "${task.host_port}" => task
   }
 
-  name     = "${var.project_name}-${each.key}-tg"
+  name     = "${var.project_name}-tg-${each.key}"
   port     = each.value.host_port
   protocol = "HTTP"
   vpc_id   = var.vpc_id
