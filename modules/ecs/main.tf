@@ -214,10 +214,7 @@ resource "aws_lb" "app" {
 }
 
 resource "aws_lb_target_group" "app" {
-  for_each = {
-    for task in local.tasks :
-    "${task.host_port}" => task
-  }
+  for_each = local.task_map
 
   name     = "${var.project_name}-tg-${each.key}"
   port     = each.value.host_port
@@ -250,12 +247,13 @@ resource "aws_lb_listener" "app" {
 }
 
 resource "aws_ecs_service" "this" {
-  for_each             = {
-    for idx, task_def in aws_ecs_task_definition.ecs_task_definitions : "${local.tasks[idx].exchange}-${local.tasks[idx].contract_type}-${local.tasks[idx].symbol}" => task_def
+  for_each = {
+    for task in local.tasks : "${task.exchange}-${task.contract_type}-${task.symbol}" => task
   }
+
   name                 = "${var.project_name}-collector-${each.key}-service"
   cluster              = aws_ecs_cluster.this.id
-  task_definition      = each.value.arn
+  task_definition      = aws_ecs_task_definition.ecs_task_definitions[each.key].arn
   desired_count        = 1
   launch_type          = "EC2"
   force_new_deployment = true
