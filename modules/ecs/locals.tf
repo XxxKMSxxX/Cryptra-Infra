@@ -24,4 +24,9 @@ locals {
       host_port     = var.base_port + idx
     }
   ]
+
+  task_map = {
+    for idx, task in local.tasks : 
+    "${task.exchange}-${task.contract_type}-${task.symbol}" => idx
+  }
 }
