@@ -216,7 +216,7 @@ resource "aws_lb" "app" {
 resource "aws_lb_target_group" "app" {
   for_each = {
     for task in local.tasks :
-    lower("${task.exchange}-${task.contract_type}-${task.symbol}") => task
+    replace(lower("${task.exchange}-${task.contract_type}-${task.symbol}"), "_", "-") => task
   }
 
   name     = "${var.project_name}-${each.key}-tg"
