@@ -219,7 +219,7 @@ resource "aws_lb_target_group" "app" {
     "${task.host_port}" => task
   }
 
-  name     = "${var.project_name}-tg-${each.key}"
+  name     = "${var.project_name}-tg-${each.value.host_port}"
   port     = each.value.host_port
   protocol = "HTTP"
   vpc_id   = var.vpc_id
