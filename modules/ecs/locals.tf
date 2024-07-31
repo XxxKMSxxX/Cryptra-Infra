@@ -1,16 +1,22 @@
 locals {
-  base_port = 8080
-  exchange_names = keys(var.collects)
-  tasks = flatten([
-    for exchange_idx in range(length(local.exchange_names)) : [
-      for contract_idx in range(length(keys(var.collects[local.exchange_names[exchange_idx]]))) : [
-        for symbol_idx in range(length(var.collects[local.exchange_names[exchange_idx]][keys(var.collects[local.exchange_names[exchange_idx]])[contract_idx]])) : {
-          exchange      = local.exchange_names[exchange_idx],
-          contract_type = keys(var.collects[local.exchange_names[exchange_idx]])[contract_idx],
-          symbol        = var.collects[local.exchange_names[exchange_idx]][keys(var.collects[local.exchange_names[exchange_idx]])[contract_idx]][symbol_idx],
-          host_port     = local.base_port + exchange_idx * 10000 + contract_idx * 1000 + symbol_idx
+  raw_tasks = flatten([
+    for exchange_name, exchange in var.collects : [
+      for contract_type, symbols in exchange : [
+        for symbol in symbols : {
+          exchange      = exchange_name,
+          contract_type = contract_type,
+          symbol        = symbol
         }
       ]
     ]
   ])
+
+  tasks = [
+    for idx, task in range(length(local.raw_tasks)) : {
+      exchange      = local.raw_tasks[idx].exchange,
+      contract_type = local.raw_tasks[idx].contract_type,
+      symbol        = local.raw_tasks[idx].symbol,
+      host_port     = var.base_port + idx
+    }
+  ]
 }
