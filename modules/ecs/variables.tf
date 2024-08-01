@@ -42,7 +42,7 @@ variable "tags" {
 
 variable "host_port_start" {
   type    = number
-  default = 8080
+  default = 8000
 }
 
 variable "container_port" {

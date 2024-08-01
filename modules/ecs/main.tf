@@ -1,5 +1,6 @@
 resource "aws_ecs_cluster" "this" {
   name = "${var.project_name}-cluster"
+  tags = var.tags
 }
 
 resource "aws_launch_configuration" "ecs" {
@@ -42,13 +43,11 @@ resource "aws_autoscaling_group" "ecs" {
 resource "aws_cloudwatch_log_group" "ecs_log_group" {
   name              = "/${var.project_name}/ecs"
   retention_in_days = 1
+  tags              = var.tags
 }
 
 resource "aws_ecs_task_definition" "ecs_task_definitions" {
-  for_each = {
-    for task in local.tasks :
-    lower("${task.exchange}-${task.contract_type}-${task.symbol}") => task
-  }
+  for_each = local.collects
 
   family        = "${var.project_name}-collector-${each.key}-task"
   network_mode  = "bridge"
@@ -91,6 +90,8 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       ]
     }
   ])
+
+  tags = var.tags
 }
 
 resource "aws_security_group" "ecs" {
@@ -98,11 +99,14 @@ resource "aws_security_group" "ecs" {
   vpc_id      = var.vpc_id
   description = "ECS security group"
 
-  ingress {
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
+  dynamic "ingress" {
+    for_each = local.collects
+    content {
+      from_port   = ingress.value.host_port
+      to_port     = ingress.value.host_port
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
   }
 
   egress {
@@ -111,6 +115,8 @@ resource "aws_security_group" "ecs" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = var.tags
 }
 
 resource "aws_security_group" "alb" {
@@ -131,6 +137,8 @@ resource "aws_security_group" "alb" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = var.tags
 }
 
 resource "aws_lb" "app" {
@@ -139,16 +147,14 @@ resource "aws_lb" "app" {
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
   subnets            = var.subnet_ids
+  tags               = var.tags
 }
 
 resource "aws_lb_target_group" "app" {
-  for_each = {
-    for task in local.tasks :
-    "${task.host_port}" => task
-  }
+  for_each = local.collects
 
-  name     = "${var.project_name}-tg-${each.key}"
-  port     = each.key
+  name     = "${var.project_name}-collector-${each.key}-tg"
+  port     = each.value.host_port
   protocol = "HTTP"
   vpc_id   = var.vpc_id
 
@@ -160,6 +166,8 @@ resource "aws_lb_target_group" "app" {
     unhealthy_threshold = 2
     matcher             = "200"
   }
+
+  tags = var.tags
 }
 
 resource "aws_lb_listener" "app" {
@@ -178,19 +186,19 @@ resource "aws_lb_listener" "app" {
 }
 
 resource "aws_ecs_service" "this" {
-  for_each = aws_ecs_task_definition.ecs_task_definitions
+  for_each = local.collects
 
   name                 = "${var.project_name}-collector-${each.key}-service"
   cluster              = aws_ecs_cluster.this.id
-  task_definition      = each.value.arn
+  task_definition      = aws_ecs_task_definition.ecs_task_definitions[each.key].arn
   desired_count        = 1
   launch_type          = "EC2"
   force_new_deployment = true
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.app[each.value.host_port].arn
+    target_group_arn = aws_lb_target_group.app[each.key].arn
     container_name   = "app"
-    container_port   = 80
+    container_port   = var.container_port
   }
 
   health_check_grace_period_seconds = 60
