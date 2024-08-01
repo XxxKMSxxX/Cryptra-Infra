@@ -13,7 +13,7 @@ locals {
 
   collects = {
     for collect in local.raw_collects : 
-    "${lower(collect.exchange)}-${lower(collect.contract)}-${lower(collect.symbol)}" => {
+    lower("${collect.exchange}-${collect.contract}-${collect.symbol}") => {
       exchange      = collect.exchange,
       contract      = collect.contract,
       symbol        = collect.symbol
