@@ -1,10 +1,10 @@
 locals {
   raw_collects = flatten([
-    for exchange_name, exchange in var.collects : [
-      for contract_type, symbols in exchange : [
+    for exchange, contracts in var.collects : [
+      for contract, symbols in contracts : [
         for symbol in symbols : {
-          exchange      = exchange_name,
-          contract_type = contract_type,
+          exchange      = exchange,
+          contract      = contract,
           symbol        = symbol
         }
       ]
@@ -13,9 +13,9 @@ locals {
 
   collects = {
     for collect in local.raw_collects : 
-    "${collect.exchange}-${collect.contract_type}-${collect.symbol}" => {
+    "${lower(collect.exchange)}-${lower(collect.contract)}-${lower(collect.symbol)}" => {
       exchange      = collect.exchange,
-      contract_type = collect.contract_type,
+      contract      = collect.contract,
       symbol        = collect.symbol
     }
   }
