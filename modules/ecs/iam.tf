@@ -25,7 +25,7 @@ resource "aws_iam_role_policy_attachment" "ecs_instance_policy_attachment" {
 }
 
 resource "aws_iam_role" "ecs_task_role" {
-  name = "${var.project_name}-ecs-task-execution-role"
+  name = "${var.project_name}-ecs-task-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
