@@ -174,7 +174,7 @@ resource "aws_lb_listener" "app" {
   for_each = aws_lb_target_group.app
 
   load_balancer_arn = aws_lb.app.arn
-  port              = "80"
+  port              = each.value.host_port
   protocol          = "HTTP"
 
   default_action {
