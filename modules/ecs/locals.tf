@@ -16,8 +16,7 @@ locals {
     idx => {
       exchange      = collect.exchange,
       contract_type = collect.contract_type,
-      symbol        = collect.symbol,
-      host_port     = var.host_port_start + idx
+      symbol        = collect.symbol
     }
   }
 }
