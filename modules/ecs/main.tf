@@ -171,7 +171,7 @@ resource "aws_lb_target_group" "app" {
 }
 
 resource "aws_lb_listener" "app" {
-  for_each = aws_lb_target_group.app
+  for_each = local.collects
 
   load_balancer_arn = aws_lb.app.arn
   port              = each.value.host_port
@@ -179,7 +179,7 @@ resource "aws_lb_listener" "app" {
 
   default_action {
     type             = "forward"
-    target_group_arn = each.value.arn
+    target_group_arn = aws_lb_target_group.app[each.key].arn
   }
 
   depends_on = [aws_lb_target_group.app]
