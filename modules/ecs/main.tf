@@ -80,7 +80,7 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
         },
         {
           name  = "CONTRACT"
-          value = each.value.contract_type
+          value = each.value.contract
         },
         {
           name  = "SYMBOL"
