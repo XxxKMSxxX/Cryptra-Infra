@@ -86,6 +86,10 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
         {
           name  = "SYMBOL"
           value = each.value.symbol
+        },
+        {
+          name  = "AWS_REGION"
+          value = var.aws_region
         }
       ]
     }
