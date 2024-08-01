@@ -1,7 +1,3 @@
-provider "aws" {
-  region = "us-west-2"
-}
-
 resource "aws_ecs_cluster" "this" {
   name = "${var.project_name}-cluster"
   tags = var.tags
@@ -75,7 +71,6 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       portMappings = [
         {
           containerPort = var.container_port
-          hostPort      = each.value.host_port
         }
       ]
       environment = [
@@ -114,20 +109,31 @@ resource "aws_security_group" "ecs" {
   vpc_id      = var.vpc_id
   description = "ECS security group"
 
-  dynamic "ingress" {
-    for_each = local.collects
-    content {
-      from_port   = ingress.value.host_port
-      to_port     = ingress.value.host_port
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
