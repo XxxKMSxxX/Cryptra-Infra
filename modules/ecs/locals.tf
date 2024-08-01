@@ -1,5 +1,5 @@
 locals {
-  raw_tasks = flatten([
+  raw_collects = flatten([
     for exchange_name, exchange in var.collects : [
       for contract_type, symbols in exchange : [
         for symbol in symbols : {
@@ -11,12 +11,13 @@ locals {
     ]
   ])
 
-  tasks = [
-    for idx in range(length(local.raw_tasks)) : {
-      exchange      = local.raw_tasks[idx].exchange,
-      contract_type = local.raw_tasks[idx].contract_type,
-      symbol        = local.raw_tasks[idx].symbol,
+  collects = {
+    for idx, collect in local.raw_collects :
+    idx => {
+      exchange      = collect.exchange,
+      contract_type = collect.contract_type,
+      symbol        = collect.symbol,
       host_port     = var.host_port_start + idx
     }
-  ]
+  }
 }

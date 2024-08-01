@@ -1,5 +1,6 @@
 resource "aws_ecs_cluster" "this" {
   name = "${var.project_name}-cluster"
+  tags = var.tags
 }
 
 resource "aws_launch_configuration" "ecs" {
@@ -25,70 +26,6 @@ data "aws_ami" "ecs" {
   }
 }
 
-data "aws_iam_policy_document" "ecs_instance_assume_role" {
-  statement {
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-resource "aws_iam_role" "ecs_instance_role" {
-  name               = "${var.project_name}-ecs-instance-role"
-  assume_role_policy = data.aws_iam_policy_document.ecs_instance_assume_role.json
-}
-
-resource "aws_iam_instance_profile" "ecs_instance_profile" {
-  name = "${var.project_name}-ecs-instance-profile"
-  role = aws_iam_role.ecs_instance_role.name
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_instance_policy_attachment" {
-  role       = aws_iam_role.ecs_instance_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-}
-
-resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "${var.project_name}-ecs-task-execution-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        },
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_policy" "ecs_task_policy" {
-  name        = "${var.project_name}-ecs-task-policy"
-  description = "Policy for ECS tasks to access Kinesis streams"
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect   = "Allow",
-        Action   = "kinesis:*",
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy_attachment" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = aws_iam_policy.ecs_task_policy.arn
-}
-
 resource "aws_autoscaling_group" "ecs" {
   launch_configuration = aws_launch_configuration.ecs.id
   min_size             = 1
@@ -106,17 +43,15 @@ resource "aws_autoscaling_group" "ecs" {
 resource "aws_cloudwatch_log_group" "ecs_log_group" {
   name              = "/${var.project_name}/ecs"
   retention_in_days = 1
+  tags              = var.tags
 }
 
 resource "aws_ecs_task_definition" "ecs_task_definitions" {
-  for_each = {
-    for task in local.tasks :
-    lower("${task.exchange}-${task.contract_type}-${task.symbol}") => task
-  }
+  for_each = local.collects
 
   family        = "${var.project_name}-collector-${each.key}-task"
   network_mode  = "bridge"
-  task_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
@@ -155,6 +90,8 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       ]
     }
   ])
+
+  tags = var.tags
 }
 
 resource "aws_security_group" "ecs" {
@@ -162,11 +99,14 @@ resource "aws_security_group" "ecs" {
   vpc_id      = var.vpc_id
   description = "ECS security group"
 
-  ingress {
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
+  dynamic "ingress" {
+    for_each = local.collects
+    content {
+      from_port   = ingress.value.host_port
+      to_port     = ingress.value.host_port
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
   }
 
   egress {
@@ -175,6 +115,8 @@ resource "aws_security_group" "ecs" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = var.tags
 }
 
 resource "aws_security_group" "alb" {
@@ -195,6 +137,8 @@ resource "aws_security_group" "alb" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = var.tags
 }
 
 resource "aws_lb" "app" {
@@ -203,15 +147,13 @@ resource "aws_lb" "app" {
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
   subnets            = var.subnet_ids
+  tags               = var.tags
 }
 
 resource "aws_lb_target_group" "app" {
-  for_each = {
-    for task in local.tasks :
-    "${task.host_port}" => task
-  }
+  for_each = local.collects
 
-  name     = "${var.project_name}-tg-${each.key}"
+  name     = "${var.project_name}-collector-${each.key}-tg"
   port     = each.value.host_port
   protocol = "HTTP"
   vpc_id   = var.vpc_id
@@ -224,6 +166,8 @@ resource "aws_lb_target_group" "app" {
     unhealthy_threshold = 2
     matcher             = "200"
   }
+
+  tags = var.tags
 }
 
 resource "aws_lb_listener" "app" {
@@ -242,11 +186,11 @@ resource "aws_lb_listener" "app" {
 }
 
 resource "aws_ecs_service" "this" {
-  for_each = aws_ecs_task_definition.ecs_task_definitions
+  for_each = local.collects
 
   name                 = "${var.project_name}-collector-${each.key}-service"
   cluster              = aws_ecs_cluster.this.id
-  task_definition      = each.value.arn
+  task_definition      = aws_ecs_task_definition.ecs_task_definitions[each.key].arn
   desired_count        = 1
   launch_type          = "EC2"
   force_new_deployment = true
@@ -254,7 +198,7 @@ resource "aws_ecs_service" "this" {
   load_balancer {
     target_group_arn = aws_lb_target_group.app[each.key].arn
     container_name   = "app"
-    container_port   = 80
+    container_port   = var.container_port
   }
 
   health_check_grace_period_seconds = 60

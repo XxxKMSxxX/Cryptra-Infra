@@ -22,7 +22,6 @@ inputs = {
   project_name  = include.root.locals.conf.project_name
   collects      = include.root.locals.conf.collects
   aws_region    = include.root.locals.conf.region
-  aws_role_arn  = "arn:aws:iam::${local.aws_account_id}:role/${include.root.locals.conf.project_name}-collector-role"
   instance_type = local.instance_type
   vpc_id        = local.vpc_id
   subnet_ids    = local.subnet_ids
