@@ -12,8 +12,8 @@ locals {
   ])
 
   collects = {
-    for idx, collect in local.raw_collects :
-    idx => {
+    for collect in local.raw_collects : 
+    "${collect.exchange}-${collect.contract_type}-${collect.symbol}" => {
       exchange      = collect.exchange,
       contract_type = collect.contract_type,
       symbol        = collect.symbol
