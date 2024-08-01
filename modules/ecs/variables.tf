@@ -13,11 +13,6 @@ variable "aws_region" {
   type        = string
 }
 
-variable "aws_role_arn" {
-  description = "AWS role arn"
-  type        = string
-}
-
 variable "instance_type" {
   description = "The EC2 instance type"
   type        = string

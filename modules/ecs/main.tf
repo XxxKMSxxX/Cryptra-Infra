@@ -25,70 +25,6 @@ data "aws_ami" "ecs" {
   }
 }
 
-data "aws_iam_policy_document" "ecs_instance_assume_role" {
-  statement {
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-resource "aws_iam_role" "ecs_instance_role" {
-  name               = "${var.project_name}-ecs-instance-role"
-  assume_role_policy = data.aws_iam_policy_document.ecs_instance_assume_role.json
-}
-
-resource "aws_iam_instance_profile" "ecs_instance_profile" {
-  name = "${var.project_name}-ecs-instance-profile"
-  role = aws_iam_role.ecs_instance_role.name
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_instance_policy_attachment" {
-  role       = aws_iam_role.ecs_instance_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-}
-
-resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "${var.project_name}-ecs-task-execution-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        },
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_policy" "ecs_task_policy" {
-  name        = "${var.project_name}-ecs-task-policy"
-  description = "Policy for ECS tasks to access Kinesis streams"
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect   = "Allow",
-        Action   = "kinesis:*",
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy_attachment" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = aws_iam_policy.ecs_task_policy.arn
-}
-
 resource "aws_autoscaling_group" "ecs" {
   launch_configuration = aws_launch_configuration.ecs.id
   min_size             = 1
@@ -116,7 +52,7 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
 
   family        = "${var.project_name}-collector-${each.key}-task"
   network_mode  = "bridge"
-  task_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
@@ -212,7 +148,7 @@ resource "aws_lb_target_group" "app" {
   }
 
   name     = "${var.project_name}-tg-${each.key}"
-  port     = each.value.host_port
+  port     = each.key
   protocol = "HTTP"
   vpc_id   = var.vpc_id
 
@@ -252,7 +188,7 @@ resource "aws_ecs_service" "this" {
   force_new_deployment = true
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.app[each.key].arn
+    target_group_arn = aws_lb_target_group.app[each.value.host_port].arn
     container_name   = "app"
     container_port   = 80
   }
