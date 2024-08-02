@@ -12,10 +12,6 @@ resource "aws_ecs_cluster" "this" {
   tags = var.tags
 }
 
-resource "aws_iam_instance_profile" "ecs_instance_profile" {
-  name = "${var.project_name}-ecs-instance-profile"
-}
-
 resource "aws_launch_configuration" "ecs" {
   name_prefix          = "${var.project_name}-launch-configuration-"
   image_id             = data.aws_ami.ecs.id
@@ -48,10 +44,6 @@ resource "aws_cloudwatch_log_group" "ecs_log_group" {
   name              = "/${var.project_name}/ecs"
   retention_in_days = 1
   tags              = var.tags
-}
-
-resource "aws_iam_role" "ecs_task_role" {
-  name = "${var.project_name}-ecs-task-role"
 }
 
 resource "aws_ecs_task_definition" "ecs_task_definitions" {
