@@ -1,6 +1,19 @@
+data "aws_ami" "ecs" {
+  most_recent = true
+  owners      = ["amazon"]
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-ecs-hvm-*-x86_64-ebs"]
+  }
+}
+
 resource "aws_ecs_cluster" "this" {
   name = "${var.project_name}-cluster"
   tags = var.tags
+}
+
+resource "aws_iam_instance_profile" "ecs_instance_profile" {
+  name = "${var.project_name}-ecs-instance-profile"
 }
 
 resource "aws_launch_configuration" "ecs" {
@@ -14,15 +27,6 @@ resource "aws_launch_configuration" "ecs" {
               EOF
   lifecycle {
     create_before_destroy = true
-  }
-}
-
-data "aws_ami" "ecs" {
-  most_recent = true
-  owners      = ["amazon"]
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-ecs-hvm-*-x86_64-ebs"]
   }
 }
 
@@ -44,6 +48,10 @@ resource "aws_cloudwatch_log_group" "ecs_log_group" {
   name              = "/${var.project_name}/ecs"
   retention_in_days = 1
   tags              = var.tags
+}
+
+resource "aws_iam_role" "ecs_task_role" {
+  name = "${var.project_name}-ecs-task-role"
 }
 
 resource "aws_ecs_task_definition" "ecs_task_definitions" {
@@ -141,11 +149,11 @@ resource "aws_security_group" "ecs" {
 }
 
 resource "aws_ecs_service" "this" {
-  for_each = local.collects
+  for_each = { for k, v in aws_ecs_task_definition.ecs_task_definitions : replace(v.family, "task", "service") => v }
 
-  name                 = "${var.project_name}-collector-${each.key}-service"
+  name                 = each.key
   cluster              = aws_ecs_cluster.this.id
-  task_definition      = aws_ecs_task_definition.ecs_task_definitions[each.key].arn
+  task_definition      = each.value.arn
   desired_count        = 1
   launch_type          = "EC2"
   force_new_deployment = true
