@@ -71,7 +71,6 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       portMappings = [
         {
           containerPort = var.container_port
-          hostPort      = each.value.host_port
         }
       ]
       environment = [
@@ -81,7 +80,7 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
         },
         {
           name  = "CONTRACT"
-          value = each.value.contract_type
+          value = each.value.contract
         },
         {
           name  = "SYMBOL"
@@ -92,6 +91,13 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
           value = var.aws_region
         }
       ]
+      healthCheck = {
+        command     = ["CMD-SHELL", "curl -f http://localhost:${var.container_port}/health || exit 1"]
+        interval    = 30
+        timeout     = 5
+        retries     = 3
+        startPeriod = 60
+      }
     }
   ])
 
@@ -103,31 +109,6 @@ resource "aws_security_group" "ecs" {
   vpc_id      = var.vpc_id
   description = "ECS security group"
 
-  dynamic "ingress" {
-    for_each = local.collects
-    content {
-      from_port   = ingress.value.host_port
-      to_port     = ingress.value.host_port
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = var.tags
-}
-
-resource "aws_security_group" "alb" {
-  name        = "${var.project_name}-alb-sg"
-  vpc_id      = var.vpc_id
-  description = "ALB security group"
-
   ingress {
     from_port   = 80
     to_port     = 80
@@ -135,59 +116,28 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = var.tags
-}
-
-resource "aws_lb" "app" {
-  name               = "${var.project_name}-lb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
-  subnets            = var.subnet_ids
-  tags               = var.tags
-}
-
-resource "aws_lb_target_group" "app" {
-  for_each = local.collects
-
-  name     = "${var.project_name}-collector-${each.key}-tg"
-  port     = each.value.host_port
-  protocol = "HTTP"
-  vpc_id   = var.vpc_id
-
-  health_check {
-    path                = "/health"
-    port                = each.value.host_port
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    matcher             = "200"
-  }
-
-  tags = var.tags
-}
-
-resource "aws_lb_listener" "app" {
-  for_each = local.collects
-
-  load_balancer_arn = aws_lb.app.arn
-  port              = each.value.host_port
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.app[each.key].arn
-  }
-
-  depends_on = [aws_lb_target_group.app]
 }
 
 resource "aws_ecs_service" "this" {
@@ -200,12 +150,6 @@ resource "aws_ecs_service" "this" {
   launch_type          = "EC2"
   force_new_deployment = true
 
-  load_balancer {
-    target_group_arn = aws_lb_target_group.app[each.key].arn
-    container_name   = "app"
-    container_port   = var.container_port
-  }
-
   health_check_grace_period_seconds = 60
 
   deployment_controller {
@@ -214,6 +158,4 @@ resource "aws_ecs_service" "this" {
 
   deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
-
-  depends_on = [aws_lb_listener.app]
 }
