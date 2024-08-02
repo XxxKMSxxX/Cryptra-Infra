@@ -158,8 +158,6 @@ resource "aws_ecs_service" "this" {
   launch_type          = "EC2"
   force_new_deployment = true
 
-  health_check_grace_period_seconds = 60
-
   deployment_controller {
     type = "ECS"
   }
