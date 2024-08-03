@@ -1,5 +1,3 @@
-data "aws_caller_identity" "current" {}
-
 data "aws_kinesis_stream" "existing_kinesis_stream" {
   name = var.stream_name
 }
@@ -51,7 +49,7 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
 
       schema_configuration {
         role_arn      = aws_iam_role.firehose_role.arn
-        catalog_id    = data.aws_caller_identity.current.account_id
+        catalog_id    = var.aws_account_id
         database_name = aws_glue_catalog_database.my_database.name
         table_name    = aws_glue_catalog_table.my_table.name
         region        = var.aws_region
@@ -151,7 +149,7 @@ resource "aws_glue_catalog_table" "my_table" {
       type = "double"
     }
 
-    location      = "s3://${aws_s3_bucket.bucket.bucket}/"
+    location      = "s3://${aws_s3_bucket.bucket.bucket}/data/"
     input_format  = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
 
@@ -160,11 +158,127 @@ resource "aws_glue_catalog_table" "my_table" {
       serialization_library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
     }
   }
+
+  partition_keys {
+    name = "exchange"
+    type = "string"
+  }
+
+  partition_keys {
+    name = "contract"
+    type = "string"
+  }
+
+  partition_keys {
+    name = "symbol"
+    type = "string"
+  }
+
+  partition_keys {
+    name = "year"
+    type = "string"
+  }
+  partition_keys {
+    name = "month"
+    type = "string"
+  }
+  partition_keys {
+    name = "day"
+    type = "string"
+  }
+}
+
+resource "aws_iam_role" "glue_service_role" {
+  name = "${var.project_name}-glue-service-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "glue.amazonaws.com"
+        },
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy" "glue_service_policy" {
+  name = "${var.project_name}-glue-service-policy"
+  role = aws_iam_role.glue_service_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          "${aws_s3_bucket.bucket.arn}",
+          "${aws_s3_bucket.bucket.arn}/*"
+        ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "glue:*"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_glue_crawler" "my_crawler" {
+  name          = "${var.project_name}-crawler"
+  role          = aws_iam_role.glue_service_role.arn
+  database_name = aws_glue_catalog_database.my_database.name
+
+  s3_target {
+    path = "s3://${aws_s3_bucket.bucket.bucket}/data/"
+  }
+
+  configuration = jsonencode({
+    "Version" : 1.0,
+    "Grouping" : {
+      "TableGroupingPolicy" : "CombineCompatibleSchemas"
+    }
+  })
+
+  schedule = "cron(0 1 * * ? *)" # 毎日1時に実行
+
+  tags = var.tags
 }
 
 resource "aws_s3_bucket" "bucket" {
   bucket = "${var.project_name}-collector"
   tags   = var.tags
+}
+
+resource "aws_s3_bucket" "athena_results_bucket" {
+  bucket = "${var.project_name}-athena-results"
+  tags   = var.tags
+}
+
+resource "aws_athena_workgroup" "primary" {
+  name = "primary"
+
+  configuration {
+    result_configuration {
+      output_location = "s3://${aws_s3_bucket.athena_results_bucket.bucket}/results/"
+    }
+  }
+
+  tags = var.tags
 }
 
 data "aws_iam_policy_document" "firehose_assume_role" {
@@ -227,9 +341,9 @@ resource "aws_iam_role_policy" "firehose_policy" {
           "glue:UpdateDatabase"
         ],
         Resource = [
-          "arn:aws:glue:${var.aws_region}:${data.aws_caller_identity.current.account_id}:catalog",
-          "arn:aws:glue:${var.aws_region}:${data.aws_caller_identity.current.account_id}:database/${aws_glue_catalog_database.my_database.name}",
-          "arn:aws:glue:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${aws_glue_catalog_database.my_database.name}/${aws_glue_catalog_table.my_table.name}"
+          "arn:aws:glue:${var.aws_region}:${var.aws_account_id}:catalog",
+          "arn:aws:glue:${var.aws_region}:${var.aws_account_id}:database/${aws_glue_catalog_database.my_database.name}",
+          "arn:aws:glue:${var.aws_region}:${var.aws_account_id}:table/${aws_glue_catalog_database.my_database.name}/${aws_glue_catalog_table.my_table.name}"
         ]
       },
       {
@@ -248,7 +362,16 @@ resource "aws_iam_role_policy" "firehose_policy" {
           "logs:CreateLogStream",
           "logs:CreateLogGroup"
         ],
-        Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/${var.project_name}/firehose:*"
+        Resource = "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/${var.project_name}/firehose:*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "athena:StartQueryExecution",
+          "athena:GetQueryExecution",
+          "athena:GetQueryResults"
+        ],
+        Resource = "*"
       }
     ]
   })
