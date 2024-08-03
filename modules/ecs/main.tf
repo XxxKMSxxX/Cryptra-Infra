@@ -110,6 +110,13 @@ resource "aws_security_group" "ecs" {
   description = "ECS security group"
 
   ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["3.112.23.0/29"]
+  }
+
+  ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
