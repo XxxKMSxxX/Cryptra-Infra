@@ -41,7 +41,7 @@ jobs:
             environments:
               - 'environments/**'
 
-  ci:
+  CI:
     needs: setup
     runs-on: ubuntu-latest
     steps:
@@ -106,7 +106,7 @@ jobs:
         run: terragrunt run-all plan
 
   release-pull-request:
-    needs: [setup, ci]
+    needs: [setup, CI]
     if: needs.setup.outputs.envs_changed != '[]' || needs.setup.outputs.modules_changed != '[]'
     runs-on: ubuntu-latest
     steps:
