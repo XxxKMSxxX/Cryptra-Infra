@@ -37,7 +37,7 @@ resource "aws_launch_template" "ecs_instance" {
 ####################
 resource "aws_autoscaling_group" "ecs_asg" {
   desired_capacity    = 1
-  max_size            = 3
+  max_size            = 1
   min_size            = 1
   vpc_zone_identifier = [aws_subnet.private_1a.id]
 
@@ -51,56 +51,6 @@ resource "aws_autoscaling_group" "ecs_asg" {
     value               = "${var.project_name}-ecs-instance"
     propagate_at_launch = true
   }
-}
-
-# スケールアウト
-resource "aws_autoscaling_policy" "scale_out_policy" {
-  name                   = "${var.project_name}-scale-out"
-  scaling_adjustment     = 1
-  adjustment_type        = "ChangeInCapacity"
-  cooldown               = 300
-  autoscaling_group_name = aws_autoscaling_group.ecs_asg.name
-}
-
-# スケールイン
-resource "aws_autoscaling_policy" "scale_in_policy" {
-  name                   = "${var.project_name}-scale-in"
-  scaling_adjustment     = -1
-  adjustment_type        = "ChangeInCapacity"
-  cooldown               = 300
-  autoscaling_group_name = aws_autoscaling_group.ecs_asg.name
-}
-
-resource "aws_cloudwatch_metric_alarm" "scale_out_alarm" {
-  alarm_name          = "${var.project_name}-scale-out-alarm"
-  comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods  = "2"
-  metric_name         = "mem_used_percent"
-  namespace           = "ECS/ContainerInsights"
-  period              = "60"
-  statistic           = "Average"
-  threshold           = "75"
-  alarm_description   = "Scale out if memory utilization >= 75% for 2 minutes"
-  dimensions = {
-    ClusterName = aws_ecs_cluster.main.name
-  }
-  alarm_actions = [aws_autoscaling_policy.scale_out_policy.arn]
-}
-
-resource "aws_cloudwatch_metric_alarm" "scale_in_alarm" {
-  alarm_name          = "${var.project_name}-scale-in-alarm"
-  comparison_operator = "LessThanOrEqualToThreshold"
-  evaluation_periods  = "5"
-  metric_name         = "mem_used_percent"
-  namespace           = "ECS/ContainerInsights"
-  period              = "60"
-  statistic           = "Average"
-  threshold           = "25"
-  alarm_description   = "Scale in if memory utilization <= 25% for 5 minutes"
-  dimensions = {
-    ClusterName = aws_ecs_cluster.main.name
-  }
-  alarm_actions = [aws_autoscaling_policy.scale_in_policy.arn]
 }
 
 ####################
