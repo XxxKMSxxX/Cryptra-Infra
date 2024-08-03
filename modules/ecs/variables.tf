@@ -39,8 +39,3 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
-
-variable "container_port" {
-  type    = number
-  default = 8080
-}
