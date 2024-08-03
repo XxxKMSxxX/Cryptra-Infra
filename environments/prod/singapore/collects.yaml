@@ -1,7 +1,19 @@
 collects: {
   bybit: {
-    spot     : ["BTCUSDT", "ETHUSDT", "SOLUSDT"],
-    linear   : ["BTCUSDT", "ETHUSDT", "SOLUSDT"],
-    inverse  : ["BTCUSD", "ETHUSD", "SOLUSD"],
+    spot: [
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT",
+    ],
+    linear: [
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    inverse: [
+      "BTCUSD",
+      "ETHUSD",
+      "SOLUSD"
+    ]
   }
 }
