@@ -18,7 +18,7 @@ resource "aws_launch_template" "ecs_instance" {
   }
   user_data = base64encode(<<-EOF
     #!/bin/bash
-    echo "ECS_CLUSTER=${aws_ecs_cluster.main.name}" | sudo tee -a /etc/ecs/ecs.config
+    echo ECS_CLUSTER=${aws_ecs_cluster.main.name} >> /etc/ecs/ecs.config
     EOF
   )
 
