@@ -269,8 +269,8 @@ resource "aws_s3_bucket" "athena_results_bucket" {
   tags   = var.tags
 }
 
-resource "aws_athena_workgroup" "primary" {
-  name = "primary"
+resource "aws_athena_workgroup" "custom_workgroup" {
+  name = "custom-workgroup"
 
   configuration {
     result_configuration {
@@ -280,6 +280,7 @@ resource "aws_athena_workgroup" "primary" {
 
   tags = var.tags
 }
+
 
 data "aws_iam_policy_document" "firehose_assume_role" {
   statement {
