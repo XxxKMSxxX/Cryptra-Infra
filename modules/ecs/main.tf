@@ -17,6 +17,7 @@ resource "aws_launch_configuration" "ecs" {
   image_id             = data.aws_ami.ecs.id
   instance_type        = var.instance_type
   iam_instance_profile = aws_iam_instance_profile.ecs_instance_profile.name
+  security_groups      = [aws_security_group.ecs.id]
   user_data            = <<-EOF
               #!/bin/bash
               echo ECS_CLUSTER=${aws_ecs_cluster.this.name} >> /etc/ecs/ecs.config
@@ -149,6 +150,11 @@ resource "aws_ecs_service" "this" {
   desired_count        = 1
   launch_type          = "EC2"
   force_new_deployment = true
+
+  network_configuration {
+    subnets         = var.subnet_ids
+    security_groups = [aws_security_group.ecs.id]
+  }
 
   deployment_controller {
     type = "ECS"
