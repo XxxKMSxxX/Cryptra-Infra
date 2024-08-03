@@ -11,7 +11,7 @@ resource "aws_ecs_cluster" "main" {
 ####################
 resource "aws_launch_template" "ecs_instance" {
   name_prefix   = "${var.project_name}-launch-configuration-"
-  image_id      = data.aws_ami.ecs_optimized.id
+  image_id      = data.aws_ami.ecs.id
   instance_type = var.instance_type
   iam_instance_profile {
     name = aws_iam_instance_profile.instance_profile.name
