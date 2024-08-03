@@ -90,22 +90,18 @@ jobs:
           tflint --format=checkstyle | reviewdog -f=checkstyle -name="tflint" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error
 
       - name: Initialize Terragrunt
-        if: needs.setup.outputs.envs_changed != '[]'
         working-directory: environments/prod
         run: terragrunt run-all init --terragrunt-non-interactive
 
       - name: Check Terragrunt format
-        if: needs.setup.outputs.envs_changed != '[]'
         working-directory: environments/prod
         run: terragrunt run-all fmt -check
 
       - name: Validate Terragrunt
-        if: needs.setup.outputs.envs_changed != '[]'
         working-directory: environments/prod
         run: terragrunt run-all validate
 
       - name: Run Terragrunt plan
-        if: needs.setup.outputs.envs_changed != '[]'
         working-directory: environments/prod
         run: terragrunt run-all plan
 
