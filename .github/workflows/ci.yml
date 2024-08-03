@@ -161,7 +161,7 @@ jobs:
         run: terragrunt run-all plan
 
   release-pull-request:
-    needs: [terragrunt, terraform]
+    needs: [setup, ci]
     if: needs.setup.outputs.envs_changed != '[]' || needs.setup.outputs.modules_changed != '[]'
     runs-on: ubuntu-latest
     steps:
