@@ -10,7 +10,7 @@ resource "aws_ecs_cluster" "main" {
 # Launch Template
 ####################
 resource "aws_launch_template" "ecs_instance" {
-  name_prefix   = var.project_name
+  name_prefix   = "${var.project_name}-launch-configuration-"
   image_id      = data.aws_ami.latest_amazon_linux2.id
   instance_type = var.instance_type
   iam_instance_profile {
@@ -18,6 +18,7 @@ resource "aws_launch_template" "ecs_instance" {
   }
   user_data = base64encode(<<-EOF
     #!/bin/bash
+    mkdir -p /etc/ecs
     echo ECS_CLUSTER=${aws_ecs_cluster.main.name} >> /etc/ecs/ecs.config
     EOF
   )
@@ -31,6 +32,10 @@ resource "aws_launch_template" "ecs_instance" {
       throughput            = 125
       delete_on_termination = true
     }
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 
   tag_specifications {
