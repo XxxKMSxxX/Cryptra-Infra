@@ -11,39 +11,6 @@ data "aws_ami" "ecs" {
 }
 
 ####################
-# ec2
-####################
-# resource "aws_instance" "main" {
-#   instance_type          = var.instance_type
-#   ami                    = data.aws_ami.latest_amazon_linux2.id
-#   subnet_id              = aws_subnet.private_1a.id
-#   vpc_security_group_ids = [aws_security_group.main.id]
-#   iam_instance_profile   = aws_iam_instance_profile.instance_profile.name
-#   user_data              = <<-EOF
-#               #!/bin/bash
-#               echo ECS_CLUSTER=${aws_ecs_cluster.main.name} >> /etc/ecs/ecs.config
-#               EOF
-
-#   root_block_device {
-#     volume_size           = 8
-#     volume_type           = "gp3"
-#     iops                  = 3000
-#     throughput            = 125
-#     delete_on_termination = true
-
-#     # EBSのNameタグ
-#     tags = var.tags
-#   }
-#   lifecycle {
-#     ignore_changes = [
-#       ami,
-#     ]
-#   }
-
-#   tags = var.tags
-# }
-
-####################
 # security group
 ####################
 resource "aws_security_group" "main" {
