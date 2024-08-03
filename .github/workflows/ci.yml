@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - feature/**
+    paths:
+      - .github/workflows/ci.yml
+      - environments/**
+      - modules/**
 
 env:
   AWS_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.IAM_ROLE_NAME }}
