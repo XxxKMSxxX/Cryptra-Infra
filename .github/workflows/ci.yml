@@ -41,56 +41,27 @@ jobs:
             environments:
               - 'environments/**'
 
-  terragrunt:
+  ci:
     needs: setup
-    if: needs.setup.outputs.envs_changed != '[]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Aqua
-        uses: aquaproj/aqua-installer@v3.0.1
+      # Setup and cache Aqua
+      - name: Cache Aqua
+        uses: actions/cache@v3.3.1
         with:
-          aqua_version: v2.28.0
-
-      - name: Install tools via Aqua
-        run: aqua install
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_DEFAULT_REGION }}
-
-      - name: Initialize Terragrunt
-        working-directory: environments/prod
-        run: terragrunt run-all init --terragrunt-non-interactive
-
-      - name: Check Terragrunt format
-        working-directory: environments/prod
-        run: terragrunt run-all fmt -check
-
-      - name: Validate Terragrunt
-        working-directory: environments/prod
-        run: terragrunt run-all validate
-
-      - name: Run Terragrunt plan
-        working-directory: environments/prod
-        run: terragrunt run-all plan
-
-  terraform:
-    needs: setup
-    if: needs.setup.outputs.modules_changed != '[]'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+          path: ~/.local/share/aquaproj-aqua
+          key: v1-aqua-installer-${{runner.os}}-${{runner.arch}}-${{hashFiles('.aqua/*.yaml')}}
+          restore-keys: |
+            v1-aqua-installer-${{runner.os}}-${{runner.arch}}-
 
       - name: Setup Aqua
         uses: aquaproj/aqua-installer@v3.0.1
         with:
           aqua_version: v2.28.0
+          aqua_opts: ""
 
       - name: Install tools via Aqua
         run: aqua install
@@ -102,20 +73,42 @@ jobs:
           aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
       - name: Run TFsec
+        if: needs.setup.outputs.modules_changed != '[]'
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tfsec --format=checkstyle | reviewdog -f=checkstyle -name="tfsec" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error
 
       - name: Run TFlint
+        if: needs.setup.outputs.modules_changed != '[]'
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tflint --init
           tflint --format=checkstyle | reviewdog -f=checkstyle -name="tflint" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error
 
+      - name: Initialize Terragrunt
+        if: needs.setup.outputs.envs_changed != '[]'
+        working-directory: environments/prod
+        run: terragrunt run-all init --terragrunt-non-interactive
+
+      - name: Check Terragrunt format
+        if: needs.setup.outputs.envs_changed != '[]'
+        working-directory: environments/prod
+        run: terragrunt run-all fmt -check
+
+      - name: Validate Terragrunt
+        if: needs.setup.outputs.envs_changed != '[]'
+        working-directory: environments/prod
+        run: terragrunt run-all validate
+
+      - name: Run Terragrunt plan
+        if: needs.setup.outputs.envs_changed != '[]'
+        working-directory: environments/prod
+        run: terragrunt run-all plan
+
   release-pull-request:
-    needs: setup
+    needs: [setup, ci]
     if: needs.setup.outputs.envs_changed != '[]' || needs.setup.outputs.modules_changed != '[]'
     runs-on: ubuntu-latest
     steps:
