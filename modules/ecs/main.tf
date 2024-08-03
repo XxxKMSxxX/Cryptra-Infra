@@ -11,7 +11,7 @@ resource "aws_ecs_cluster" "main" {
 ####################
 resource "aws_launch_template" "ecs_instance" {
   name_prefix   = "${var.project_name}-launch-configuration-"
-  image_id      = data.aws_ami.ecs.id
+  image_id      = data.aws_ami.ecs_optimized.id
   instance_type = var.instance_type
   iam_instance_profile {
     name = aws_iam_instance_profile.instance_profile.name
@@ -22,17 +22,6 @@ resource "aws_launch_template" "ecs_instance" {
     EOF
   )
 
-  block_device_mappings {
-    device_name = "/dev/xvda"
-    ebs {
-      volume_size           = 8
-      volume_type           = "gp3"
-      iops                  = 3000
-      throughput            = 125
-      delete_on_termination = true
-    }
-  }
-
   lifecycle {
     create_before_destroy = true
   }
@@ -42,6 +31,7 @@ resource "aws_launch_template" "ecs_instance" {
     tags          = var.tags
   }
 }
+
 
 ####################
 # Auto Scaling Group
