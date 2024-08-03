@@ -247,6 +247,11 @@ resource "aws_glue_crawler" "my_crawler" {
     path = "s3://${aws_s3_bucket.bucket.bucket}/data/"
   }
 
+  catalog_target {
+    database_name = aws_glue_catalog_database.my_database.name
+    tables        = [aws_glue_catalog_table.my_table.name]
+  }
+
   configuration = jsonencode({
     "Version" : 1.0,
     "Grouping" : {
@@ -254,7 +259,7 @@ resource "aws_glue_crawler" "my_crawler" {
     }
   })
 
-  schedule = "cron(0 1 * * ? *)" # 毎日1時に実行
+  schedule = "cron(0 16 * * ? *)" # (UTC)16:00
 
   tags = var.tags
 }
