@@ -1,159 +1,136 @@
-# data "aws_ami" "ecs" {
-#   most_recent = true
-#   owners      = ["amazon"]
-#   filter {
-#     name   = "name"
-#     values = ["amzn2-ami-ecs-hvm-*-x86_64-ebs"]
-#   }
-# }
+####################
+# ECS Cluster
+####################
+resource "aws_ecs_cluster" "main" {
+  name = "${var.project_name}-ecs-cluster"
+  tags = var.tags
+}
 
-# resource "aws_ecs_cluster" "this" {
-#   name = "${var.project_name}-cluster"
-#   tags = var.tags
-# }
+####################
+# ECS Task Definition
+####################
+resource "aws_ecs_task_definition" "ecs_task_definitions" {
+  for_each = local.collects
 
-# resource "aws_launch_configuration" "ecs" {
-#   name_prefix          = "${var.project_name}-launch-configuration-"
-#   image_id             = data.aws_ami.ecs.id
-#   instance_type        = var.instance_type
-#   iam_instance_profile = aws_iam_instance_profile.ecs_instance_profile.name
-#   user_data            = <<-EOF
-#               #!/bin/bash
-#               echo ECS_CLUSTER=${aws_ecs_cluster.this.name} >> /etc/ecs/ecs.config
-#               EOF
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
+  family                   = "${var.project_name}-collector-${each.key}-task"
+  network_mode             = "bridge"
+  requires_compatibilities = ["EC2"]
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
 
-# resource "aws_autoscaling_group" "ecs" {
-#   launch_configuration = aws_launch_configuration.ecs.id
-#   min_size             = 1
-#   max_size             = 1
-#   desired_capacity     = 1
-#   vpc_zone_identifier  = var.subnet_ids
+  container_definitions = jsonencode([
+    {
+      name      = "app"
+      image     = "${var.ecr_registry}:latest"
+      essential = true
+      memory    = 96
+      cpu       = 96
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = "/${var.project_name}/ecs"
+          awslogs-region        = var.aws_region
+          awslogs-stream-prefix = "ecs"
+        }
+      }
+      portMappings = [
+        {
+          containerPort = 8080
+          hostPort      = 0
+        }
+      ]
+      environment = [
+        {
+          name  = "EXCHANGE"
+          value = each.value.exchange
+        },
+        {
+          name  = "CONTRACT"
+          value = each.value.contract
+        },
+        {
+          name  = "SYMBOL"
+          value = each.value.symbol
+        },
+        {
+          name  = "AWS_REGION"
+          value = var.aws_region
+        }
+      ]
+      healthCheck = {
+        command     = ["CMD", "curl -f http://localhost:8080/health || exit 1"]
+        interval    = 30
+        timeout     = 5
+        retries     = 3
+        startPeriod = 60
+      }
+    }
+  ])
 
-#   tag {
-#     key                 = "Name"
-#     value               = "${var.project_name}-ecs-instance"
-#     propagate_at_launch = true
-#   }
-# }
+  tags = var.tags
+}
 
-# resource "aws_cloudwatch_log_group" "ecs_log_group" {
-#   name              = "/${var.project_name}/ecs"
-#   retention_in_days = 1
-#   tags              = var.tags
-# }
+####################
+# CloudWatch Log Group
+####################
+resource "aws_cloudwatch_log_group" "ecs_log_group" {
+  name              = "/${var.project_name}/ecs"
+  retention_in_days = 1
+  tags              = var.tags
+}
 
-# resource "aws_ecs_task_definition" "ecs_task_definitions" {
-#   for_each = local.collects
+####################
+# ECS Service
+####################
+resource "aws_ecs_service" "this" {
+  for_each = { for k, v in aws_ecs_task_definition.ecs_task_definitions : replace(v.family, "task", "service") => v }
 
-#   family        = "${var.project_name}-collector-${each.key}-task"
-#   network_mode  = "bridge"
-#   task_role_arn = aws_iam_role.ecs_task_role.arn
+  name            = each.key
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = each.value.arn
+  desired_count   = 1
+  launch_type     = "EC2"
 
-#   container_definitions = jsonencode([
-#     {
-#       name      = "app"
-#       image     = "${var.ecr_registry}:latest"
-#       essential = true
-#       memory    = 96
-#       cpu       = 96
-#       logConfiguration = {
-#         logDriver = "awslogs"
-#         options = {
-#           awslogs-group         = "/${var.project_name}/ecs"
-#           awslogs-region        = var.aws_region
-#           awslogs-stream-prefix = "ecs"
-#         }
-#       }
-#       portMappings = [
-#         {
-#           containerPort = 8080
-#         }
-#       ]
-#       environment = [
-#         {
-#           name  = "EXCHANGE"
-#           value = each.value.exchange
-#         },
-#         {
-#           name  = "CONTRACT"
-#           value = each.value.contract
-#         },
-#         {
-#           name  = "SYMBOL"
-#           value = each.value.symbol
-#         },
-#         {
-#           name  = "AWS_REGION"
-#           value = var.aws_region
-#         }
-#       ]
-#       healthCheck = {
-#         command     = ["CMD", "curl -f http://localhost:8080/health || exit 1"]
-#         interval    = 30
-#         timeout     = 5
-#         retries     = 3
-#         startPeriod = 60
-#       }
-#     }
-#   ])
+  network_configuration {
+    subnets         = [aws_subnet.private_1a.id]
+    security_groups = [aws_security_group.main.id]
+  }
 
-#   tags = var.tags
-# }
+  deployment_controller {
+    type = "ECS"
+  }
 
-# resource "aws_security_group" "ecs" {
-#   name        = "${var.project_name}-ecs-sg"
-#   vpc_id      = var.vpc_id
-#   description = "ECS security group"
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
+}
 
-#   ingress {
-#     from_port   = 22
-#     to_port     = 22
-#     protocol    = "tcp"
-#     cidr_blocks = ["3.112.23.0/29"]
-#   }
+####################
+# IAM Role for ECS Task
+####################
+data "aws_iam_policy_document" "ecs_task_assume_role" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
 
-#   ingress {
-#     from_port   = 80
-#     to_port     = 80
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
+resource "aws_iam_role" "ecs_task_role" {
+  name               = "${var.project_name}-ecs-task-role"
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
+}
 
-#   ingress {
-#     from_port   = 443
-#     to_port     = 443
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
+resource "aws_iam_role_policy_attachment" "ecs_task_role_policy_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonKinesisFullAccess"
+}
 
-#   egress {
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-
-#   tags = var.tags
-# }
-
-# resource "aws_ecs_service" "this" {
-#   for_each = { for k, v in aws_ecs_task_definition.ecs_task_definitions : replace(v.family, "task", "service") => v }
-
-#   name                 = each.key
-#   cluster              = aws_ecs_cluster.this.id
-#   task_definition      = each.value.arn
-#   desired_count        = 1
-#   launch_type          = "EC2"
-#   force_new_deployment = true
-
-#   deployment_controller {
-#     type = "ECS"
-#   }
-
-#   deployment_minimum_healthy_percent = 100
-#   deployment_maximum_percent         = 200
-# }
+####################
+# IAM Role Policy Attachment for EC2
+####################
+resource "aws_iam_role_policy_attachment" "ecs_for_ec2_role" {
+  role       = aws_iam_role.instance_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}
