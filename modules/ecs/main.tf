@@ -11,15 +11,14 @@ resource "aws_ecs_cluster" "main" {
 ####################
 resource "aws_launch_template" "ecs_instance" {
   name_prefix   = "${var.project_name}-launch-configuration-"
-  image_id      = data.aws_ami.latest_amazon_linux2.id
+  image_id      = data.aws_ami.ecs.id
   instance_type = var.instance_type
   iam_instance_profile {
     name = aws_iam_instance_profile.instance_profile.name
   }
   user_data = base64encode(<<-EOF
     #!/bin/bash
-    mkdir -p /etc/ecs
-    echo ECS_CLUSTER=${aws_ecs_cluster.main.name} >> /etc/ecs/ecs.config
+    echo "ECS_CLUSTER=${aws_ecs_cluster.main.name}" | sudo tee -a /etc/ecs/ecs.config
     EOF
   )
 

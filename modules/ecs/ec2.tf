@@ -1,13 +1,12 @@
 ####################
 # ami
 ####################
-data "aws_ami" "latest_amazon_linux2" {
+data "aws_ami" "ecs" {
   most_recent = true
   owners      = ["amazon"]
-
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    values = ["amzn2-ami-ecs-hvm-*-x86_64-ebs"]
   }
 }
 
@@ -70,7 +69,7 @@ resource "aws_iam_instance_profile" "instance_profile" {
 }
 
 resource "aws_iam_role" "instance_role" {
-  name               = "${var.project_name}-ssm"
+  name               = "${var.project_name}-instance_role"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
