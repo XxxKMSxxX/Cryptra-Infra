@@ -8,25 +8,26 @@ variable "collects" {
   type        = map(map(list(string)))
 }
 
-variable "aws_region" {
-  description = "AWS region"
+variable "vpc" {
+  description = "Parameter for VPC"
   type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "public_subnet" {
+  description = "Parameter for public subnet"
+  type        = string
+  default     = "10.0.0.0/24"
+}
+
+variable "private_subnet" {
+  description = "Parameter for private subnet"
+  type        = string
+  default     = "10.0.128.0/24"
 }
 
 variable "instance_type" {
-  description = "The EC2 instance type"
-  type        = string
-  default     = "t3.micro"
-}
-
-variable "vpc_id" {
-  description = "The VPC ID"
-  type        = string
-}
-
-variable "subnet_ids" {
-  description = "The list of subnet IDs"
-  type        = list(string)
+  default = "t2.micro"
 }
 
 variable "ecr_registry" {
