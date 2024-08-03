@@ -6,6 +6,11 @@ on:
       - main
     types:
       - closed
+    paths:
+      - .github/workflows/cd.yml
+      - environments/**
+      - modules/**
+
 
 env:
   AWS_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.IAM_ROLE_NAME }}
