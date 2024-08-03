@@ -254,7 +254,7 @@ resource "aws_glue_crawler" "my_crawler" {
     }
   })
 
-  schedule = "cron(0 1 * * ? *)" # 毎日1時に実行
+  schedule = "cron(0 16 * * ? *)" # (UTC)16:00
 
   tags = var.tags
 }
