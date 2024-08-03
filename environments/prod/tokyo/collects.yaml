@@ -1,4 +1,21 @@
 collects: {
+  bybit: {
+    spot: [
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT",
+    ],
+    linear: [
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    inverse: [
+      "BTCUSD",
+      "ETHUSD",
+      "SOLUSD"
+    ]
+  },
   binance: {
     spot: [
       "btcusdt",
