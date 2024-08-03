@@ -281,7 +281,6 @@ resource "aws_athena_workgroup" "custom_workgroup" {
   tags = var.tags
 }
 
-
 data "aws_iam_policy_document" "firehose_assume_role" {
   statement {
     effect = "Allow"
