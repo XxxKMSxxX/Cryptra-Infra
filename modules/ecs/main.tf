@@ -75,12 +75,12 @@ resource "aws_cloudwatch_metric_alarm" "scale_out_alarm" {
   alarm_name          = "${var.project_name}-scale-out-alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = "2"
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/ECS"
+  metric_name         = "mem_used_percent"
+  namespace           = "ECS/ContainerInsights"
   period              = "60"
   statistic           = "Average"
   threshold           = "75"
-  alarm_description   = "Scale out if CPUUtilization >= 75% for 2 minutes"
+  alarm_description   = "Scale out if memory utilization >= 75% for 2 minutes"
   dimensions = {
     ClusterName = aws_ecs_cluster.main.name
   }
@@ -90,13 +90,13 @@ resource "aws_cloudwatch_metric_alarm" "scale_out_alarm" {
 resource "aws_cloudwatch_metric_alarm" "scale_in_alarm" {
   alarm_name          = "${var.project_name}-scale-in-alarm"
   comparison_operator = "LessThanOrEqualToThreshold"
-  evaluation_periods  = "2"
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/ECS"
+  evaluation_periods  = "5"
+  metric_name         = "mem_used_percent"
+  namespace           = "ECS/ContainerInsights"
   period              = "60"
   statistic           = "Average"
   threshold           = "25"
-  alarm_description   = "Scale in if CPUUtilization <= 25% for 2 minutes"
+  alarm_description   = "Scale in if memory utilization <= 25% for 5 minutes"
   dimensions = {
     ClusterName = aws_ecs_cluster.main.name
   }
