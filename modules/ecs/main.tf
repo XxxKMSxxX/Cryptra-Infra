@@ -71,6 +71,7 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
       portMappings = [
         {
           containerPort = var.container_port
+          hostPort      = var.container_port
         }
       ]
       environment = [
