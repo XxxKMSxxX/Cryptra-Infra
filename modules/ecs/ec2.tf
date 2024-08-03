@@ -20,6 +20,8 @@ resource "aws_instance" "main" {
   subnet_id              = aws_subnet.private_1a.id
   vpc_security_group_ids = [aws_security_group.main.id]
   iam_instance_profile   = aws_iam_instance_profile.instance_profile.name
+  user_data              = file("user_data.sh")
+
   root_block_device {
     volume_size           = 8
     volume_type           = "gp3"
@@ -61,17 +63,16 @@ resource "aws_security_group" "main" {
   }
 }
 
-
 ####################
 # ec2 iam role
 ####################
 # インスタンスプロファイルを作成
 resource "aws_iam_instance_profile" "instance_profile" {
-  name = "${var.project_name}-ssm"
-  role = aws_iam_role.ssm_role.name
+  name = "${var.project_name}-instance-profile"
+  role = aws_iam_role.instance_role.name
 }
 
-resource "aws_iam_role" "ssm_role" {
+resource "aws_iam_role" "instance_role" {
   name               = "${var.project_name}-ssm"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
@@ -88,6 +89,6 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "ssm_managed_instance_core" {
-  role       = aws_iam_role.ssm_role.name
+  role       = aws_iam_role.instance_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }

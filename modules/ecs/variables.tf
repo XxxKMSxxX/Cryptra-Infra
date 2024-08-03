@@ -3,11 +3,6 @@ variable "project_name" {
   type        = string
 }
 
-variable "collects" {
-  description = "The collects configuration"
-  type        = map(map(list(string)))
-}
-
 variable "vpc" {
   description = "Parameter for VPC"
   type        = string
@@ -32,6 +27,16 @@ variable "instance_type" {
 
 variable "ecr_registry" {
   description = "ECR registry URI"
+  type        = string
+}
+
+variable "collects" {
+  description = "The collects configuration"
+  type        = map(map(list(string)))
+}
+
+variable "aws_region" {
+  description = "AWS region"
   type        = string
 }
 
