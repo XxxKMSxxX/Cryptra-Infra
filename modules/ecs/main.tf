@@ -90,11 +90,6 @@ resource "aws_ecs_service" "this" {
   desired_count   = 1
   launch_type     = "EC2"
 
-  network_configuration {
-    subnets         = [aws_subnet.private_1a.id]
-    security_groups = [aws_security_group.main.id]
-  }
-
   deployment_controller {
     type = "ECS"
   }
