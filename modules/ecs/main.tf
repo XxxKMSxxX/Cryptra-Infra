@@ -7,6 +7,60 @@ resource "aws_ecs_cluster" "main" {
 }
 
 ####################
+# Launch Template
+####################
+resource "aws_launch_template" "ecs_instance" {
+  name_prefix   = var.project_name
+  image_id      = data.aws_ami.latest_amazon_linux2.id
+  instance_type = var.instance_type
+  iam_instance_profile {
+    name = aws_iam_instance_profile.instance_profile.name
+  }
+  user_data = base64encode(<<-EOF
+    #!/bin/bash
+    echo ECS_CLUSTER=${aws_ecs_cluster.main.name} >> /etc/ecs/ecs.config
+    EOF
+  )
+
+  block_device_mappings {
+    device_name = "/dev/xvda"
+    ebs {
+      volume_size           = 8
+      volume_type           = "gp3"
+      iops                  = 3000
+      throughput            = 125
+      delete_on_termination = true
+    }
+  }
+
+  tag_specifications {
+    resource_type = "instance"
+    tags          = var.tags
+  }
+}
+
+####################
+# Auto Scaling Group
+####################
+resource "aws_autoscaling_group" "ecs_asg" {
+  desired_capacity    = 1
+  max_size            = 1
+  min_size            = 1
+  vpc_zone_identifier = [aws_subnet.private_1a.id]
+
+  launch_template {
+    id      = aws_launch_template.ecs_instance.id
+    version = "$Latest"
+  }
+
+  tag {
+    key                 = "Name"
+    value               = "${var.project_name}-ecs-instance"
+    propagate_at_launch = true
+  }
+}
+
+####################
 # ECS Task Definition
 ####################
 resource "aws_ecs_task_definition" "ecs_task_definitions" {
