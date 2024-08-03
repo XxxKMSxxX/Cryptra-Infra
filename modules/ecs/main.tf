@@ -93,7 +93,7 @@ resource "aws_ecs_task_definition" "ecs_task_definitions" {
         }
       ]
       healthCheck = {
-        command     = ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+        command     = ["CMD", "curl -f http://localhost:8080/health >> /proc/1/fd/1 2>&1 || exit 1"]
         interval    = 30
         timeout     = 5
         retries     = 3
