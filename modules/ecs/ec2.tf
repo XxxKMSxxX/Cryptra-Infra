@@ -20,7 +20,10 @@ resource "aws_instance" "main" {
   subnet_id              = aws_subnet.private_1a.id
   vpc_security_group_ids = [aws_security_group.main.id]
   iam_instance_profile   = aws_iam_instance_profile.instance_profile.name
-  user_data              = file("user_data.sh")
+  user_data              = <<-EOF
+              #!/bin/bash
+              echo ECS_CLUSTER=${aws_ecs_cluster.main.name} >> /etc/ecs/ecs.config
+              EOF
 
   root_block_device {
     volume_size           = 8
@@ -30,9 +33,7 @@ resource "aws_instance" "main" {
     delete_on_termination = true
 
     # EBSのNameタグ
-    tags = {
-      Name = "${var.project_name}"
-    }
+    tags = var.tags
   }
   lifecycle {
     ignore_changes = [
@@ -40,9 +41,7 @@ resource "aws_instance" "main" {
     ]
   }
 
-  tags = {
-    Name = "${var.project_name}"
-  }
+  tags = var.tags
 }
 
 ####################
@@ -58,9 +57,7 @@ resource "aws_security_group" "main" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = "${var.project_name}-sg"
-  }
+  tags = var.tags
 }
 
 ####################
