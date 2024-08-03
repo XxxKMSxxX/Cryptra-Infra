@@ -95,11 +95,6 @@ resource "aws_ecs_service" "this" {
     security_groups = [aws_security_group.main.id]
   }
 
-  network_configuration {
-    subnets         = var.subnet_ids
-    security_groups = [aws_security_group.ecs.id]
-  }
-
   deployment_controller {
     type = "ECS"
   }
