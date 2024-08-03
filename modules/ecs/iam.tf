@@ -19,9 +19,15 @@ resource "aws_iam_instance_profile" "ecs_instance_profile" {
   role = aws_iam_role.ecs_instance_role.name
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_instance_policy_attachment" {
+resource "aws_iam_role_policy_attachment" "ecs_instance_policy_attachments" {
+  for_each = toset([
+    "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role",
+    "arn:aws:iam::aws:policy/AmazonEC2RoleforSSM",
+    "arn:aws:iam::aws:policy/AmazonEC2InstanceConnect",
+  ])
+
   role       = aws_iam_role.ecs_instance_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+  policy_arn = each.value
 }
 
 resource "aws_iam_role" "ecs_task_role" {
