@@ -151,6 +151,11 @@ resource "aws_ecs_service" "this" {
   launch_type          = "EC2"
   force_new_deployment = true
 
+  network_configuration {
+    subnets         = var.subnet_ids
+    security_groups = [aws_security_group.ecs.id]
+  }
+
   deployment_controller {
     type = "ECS"
   }
