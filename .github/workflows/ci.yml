@@ -49,11 +49,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup aqua
+      - name: Setup Aqua
         uses: aquaproj/aqua-installer@v3.0.1
         with:
           aqua_version: v2.28.0
-          aqua_opts: ""
 
       - name: Install tools via Aqua
         run: aqua install
@@ -88,11 +87,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup aqua
+      - name: Setup Aqua
         uses: aquaproj/aqua-installer@v3.0.1
         with:
           aqua_version: v2.28.0
-          aqua_opts: ""
 
       - name: Install tools via Aqua
         run: aqua install
@@ -117,7 +115,7 @@ jobs:
           tflint --format=checkstyle | reviewdog -f=checkstyle -name="tflint" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error
 
   release-pull-request:
-    needs: [terragrunt, terraform]
+    needs: setup
     if: needs.setup.outputs.envs_changed != '[]' || needs.setup.outputs.modules_changed != '[]'
     runs-on: ubuntu-latest
     steps:
@@ -141,10 +139,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          tokyo_time=$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M:%S')
           gh pr create \
             -B main \
             -H "${{ github.ref_name }}" \
-            -t "Automated Release - ${{ env.tokyo_time }}" \
+            -t "Automated Release - $tokyo_time" \
             -b "This automated PR merges the feature branch '${{ github.ref_name }}' into 'main' and includes the following updates:\n\n- Security checks\n- Format checks\n\nPlease review and approve the changes." \
             -a "${{ github.actor }}"
         shell: bash
