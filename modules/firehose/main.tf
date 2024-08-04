@@ -233,6 +233,15 @@ resource "aws_iam_role_policy" "glue_service_policy" {
           "glue:*"
         ],
         Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:PutLogEvents",
+          "logs:CreateLogStream",
+          "logs:CreateLogGroup"
+        ],
+        Resource = "*"
       }
     ]
   })
@@ -242,6 +251,7 @@ resource "aws_glue_crawler" "my_crawler" {
   name          = "${var.project_name}-crawler"
   role          = aws_iam_role.glue_service_role.arn
   database_name = aws_glue_catalog_database.my_database.name
+  schedule      = "cron(0 16 * * ? *)" # (UTC)16:00
 
   catalog_target {
     database_name = aws_glue_catalog_database.my_database.name
@@ -250,6 +260,7 @@ resource "aws_glue_crawler" "my_crawler" {
 
   schema_change_policy {
     delete_behavior = "LOG"
+    update_behavior = "UPDATE_IN_DATABASE"
   }
 
   configuration = jsonencode({
@@ -257,9 +268,10 @@ resource "aws_glue_crawler" "my_crawler" {
     "Grouping" : {
       "TableGroupingPolicy" : "CombineCompatibleSchemas"
     }
+    "CrawlerOutput" : {
+      "Partitions" : { "AddOrUpdateBehavior" : "InheritFromTable" }
+    }
   })
-
-  schedule = "cron(0 16 * * ? *)" # (UTC)16:00
 
   tags = var.tags
 }
