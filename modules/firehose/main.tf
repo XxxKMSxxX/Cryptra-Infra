@@ -252,6 +252,14 @@ resource "aws_glue_crawler" "my_crawler" {
     "Version" : 1.0,
     "Grouping" : {
       "TableGroupingPolicy" : "CombineCompatibleSchemas"
+    },
+    "CrawlerOutput" : {
+      "Partitions" : { "AddOrUpdateBehavior" : "InheritFromTable" },
+      "Tables" : { "AddOrUpdateBehavior" : "MergeNewColumns" }
+    },
+    "SchemaChangePolicy" : {
+      "UpdateBehavior" : "UPDATE_IN_DATABASE",
+      "DeleteBehavior" : "LOG"
     }
   })
 
