@@ -248,18 +248,14 @@ resource "aws_glue_crawler" "my_crawler" {
     tables        = [aws_glue_catalog_table.my_table.name]
   }
 
+  schema_change_policy {
+    delete_behavior = "LOG"
+  }
+
   configuration = jsonencode({
     "Version" : 1.0,
     "Grouping" : {
       "TableGroupingPolicy" : "CombineCompatibleSchemas"
-    },
-    "CrawlerOutput" : {
-      "Partitions" : { "AddOrUpdateBehavior" : "InheritFromTable" },
-      "Tables" : { "AddOrUpdateBehavior" : "MergeNewColumns" }
-    },
-    "SchemaChangePolicy" : {
-      "UpdateBehavior" : "UPDATE_IN_DATABASE",
-      "DeleteBehavior" : "LOG"
     }
   })
 
