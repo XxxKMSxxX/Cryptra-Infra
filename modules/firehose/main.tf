@@ -188,6 +188,16 @@ resource "aws_glue_catalog_table" "my_table" {
   }
 }
 
+resource "aws_glue_partition_index" "main" {
+  database_name = aws_glue_catalog_database.my_database.name
+  table_name    = aws_glue_catalog_table.my_table.name
+
+  partition_index {
+    index_name = "exchange_contract_symbol"
+    keys       = ["exchange", "contract", "symbol"]
+  }
+}
+
 resource "aws_iam_role" "glue_service_role" {
   name = "${var.project_name}-glue-service-role"
 
