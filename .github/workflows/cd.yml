@@ -10,6 +10,7 @@ on:
       - .github/workflows/cd.yml
       - environments/**
       - modules/**
+      - aqua.yaml
 
 
 env:
