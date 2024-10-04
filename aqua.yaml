@@ -12,7 +12,7 @@ registries:
 packages:
   - name: aquasecurity/tfsec@v1.28.10
   - name: gruntwork-io/terragrunt@v0.62.0
-  - name: hashicorp/terraform@v1.5.2
+  - name: hashicorp/terraform@v1.9.7
   - name: reviewdog/reviewdog@v0.20.0
   - name: suzuki-shunsuke/tfcmt@v4.10.0
   - name: terraform-linters/tflint@v0.52.0
